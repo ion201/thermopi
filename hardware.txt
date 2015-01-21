@@ -1,0 +1,9 @@
+http://wiki.xtronics.com/index.php/Thermostat_signals_and_wiring
+
+Relevant specs:
+C (black) - 24 Vac neutral
+G (green) - Fan control. Connect to R
+Y (yellow) - Cooling control. Connect to RC
+O/B (orange) - Connecting to R makes something click outside. Not sure what this actually does.
+R (red) - 24 Vac power
+RC (red) - 24 Vac power, specfically for cooling switch
