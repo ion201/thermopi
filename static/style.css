@@ -1,0 +1,14 @@
+table.list td {
+    border-style: solid;
+    border-width: 1px;
+    padding: 10px;
+}
+table.list th {
+    border-style: solid;
+    border-width: 1px;
+    padding: 7px;
+}
+table.list {
+    border-style: none;
+    border-collapse: collapse;
+}

@@ -4,52 +4,12 @@
 <head>
     <title>ThermoPi Control Panel</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.png') }}">
-    <script type="text/javascript">
-        function checkForm()
-        {
-            var value = +document.new_event.time.value;
-            if (value >= 0 && value <= 2400 && document.new_event.time.value != ""){
-                return true;
-            } else{
-                document.new_event.time.style["background-color"] = "white";
-                setTimeout("document.new_event.time.style['background-color'] = 'red'", 150);
-                return false;
-            }
-        }
-    </script>
-    <script type="text/javascript">
-        function checkAll(field)
-        {
-            for (i = 0; i < field.length; i++){
-                field[i].checked = true;
-            }
-        }
-        function uncheckAll(field)
-        {
-            for (i = 0; i < field.length; i++){
-                field[i].checked = false;
-            }
-        }
-    </script>
-    <style type="text/css">
-        table.events_list td {
-            padding: 15px;
-            border-style: solid;
-            border-width: 1px;
-        }
-        table.events_list th {
-            border-style: solid;
-            border-width: 1px;
-        }
-        table.events_list {
-            border-style: none;
-            border-collapse: collapse;
-        }
-    </style>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.png') }}" />
+    <script type="text/javascript" src="{{ url_for('static', filename='functions.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 
-<body style="margin:0px 10%">
+<body style="width:480px">
 
 <h1>ThermoPi Control Panel</h1>
 
@@ -57,7 +17,7 @@
 <p style="color:green">{{ success_message }}</p>
 
 <h4>Current Temperature</h4>
-<div id="temps" style="margin:0px 5%; width:40%">
+<div id="temps" style="margin:0px 5%; width:360px">
     <div id="temp_inside" style="float:left; margin:0; width:50%">
         {{ temp_inside }}
     </div>
@@ -77,53 +37,56 @@
 
 <h4>Events</h4>
 
-<table class="events_list">
+<table class="list">
     <tr>
         <th>Days</th>
         <th>Time</th>
         <th>Device</th>
         <th>Set to</th>
+        <th>Temp</th>
         <th></th>
     </tr>
-{% for days, time, device, mode in events %}
-       <tr>
-            <td>{{ days }}</td>
-            <td>{{ time }}</td>
-            <td>{{ device }}</td>
-            <td>{{ mode }}</td>
-            <td><a href="/"><img width=16 height=16
-                 src="{{ url_for('static', filename='trash_bin.jpg') }}" />
-                 </a></td>
-       </tr>
+{% for days, time, device, mode, temp in events %}
+   <tr>
+        <td>{{ days }}</td>
+        <td>{{ time }}</td>
+        <td>{{ device }}</td>
+        <td>{{ mode }}</td>
+        <td>{{ temp }}</td>
+        <td><a href="/deleteevent?index={{ loop.index0  }}"><img width=16 height=16
+             src="{{ url_for('static', filename='trash_bin.jpg') }}" />
+             </a></td>
+   </tr>
 {% endfor %}
 </table>
 
 <br />
 
 <h4>Create Event</h4>
-<form action="/newevent/" method="POST" enctype="multipart/form-data"
-onsubmit="return checkForm()" name="new_event">
+<form action="/newevent" method="POST" enctype="multipart/form-data"
+onsubmit="return (checkFormValue(document.new_event.time) && checkFormValue(document.new_event.temp))" name="new_event">
     <input type="button" onclick="checkAll(document.new_event.days_select)" value="Check All" />
     <input type="button" onclick="uncheckAll(document.new_event.days_select)" value="Uncheck All" />
     <br />
-    <input type="checkbox" id="sunday" name="days_select" /><label for="sunday">S</label>
-    <input type="checkbox" id="monday" name="days_select" /><label for="monday">M</label>
-    <input type="checkbox" id="tuesday" name="days_select" /><label for="tuesday">T</label>
-    <input type="checkbox" id="wednesday" name="days_select" /><label for="wednesday">W</label>
-    <input type="checkbox" id="thursday" name="days_select" /><label for="thursday">Th</label>
-    <input type="checkbox" id="friday" name="days_select" /><label for="friday">F</label>
-    <input type="checkbox" id="saturday" name="days_select" /><label for="saturday">Sa</label>
+    <input type="checkbox" id="sunday" name="days_select" value="sunday" /><label for="sunday">S</label>
+    <input type="checkbox" id="monday" name="days_select" value="monday" /><label for="monday">M</label>
+    <input type="checkbox" id="tuesday" name="days_select" value="tuesday" /><label for="tuesday">T</label>
+    <input type="checkbox" id="wednesday" name="days_select" value="wednesday" /><label for="wednesday">W</label>
+    <input type="checkbox" id="thursday" name="days_select" value="thursday" /><label for="thursday">Th</label>
+    <input type="checkbox" id="friday" name="days_select" value="friday" /><label for="friday">F</label>
+    <input type="checkbox" id="saturday" name="days_select" value="saturday" /><label for="saturday">Sa</label>
     <br />
     <label for="time">Time (Military time: 0000-2400):</label>
-    <input type="text" style="width:50px;" name="time" id="time" />
+    <input type="text" style="width:40px;" name="time" id="time" maxlength="4" />
     <br />
-    <input type="radio" id="fan" name="device_select" checked /><label for="fan">Fan</label>
-    <input type="radio" id="ac" name="device_select" /><label for="ac">AC</label>
-    <input type="radio" id="heat" name="device_select" /><label for="heat">Heat</label>
+    <input type="radio" id="fan" name="device_select" value="fan" checked /><label for="fan">Fan</label>
+    <input type="radio" id="ac" name="device_select" value="ac" /><label for="ac">AC</label>
+    <input type="radio" id="heat" name="device_select" value="heat" /><label for="heat">Heat</label>
     <br />
-    <input type="radio" id="off" name="mode_select" required="required" /><label for="off">Off</label>
-    <input type="radio" id="on" name="mode_select" /><label for="on">On</label>
-    <input type="radio" id="auto" name="mode_select" /><label for="auto">Auto</label>
+    <input type="radio" id="off" name="mode_select" value="off" required="required" /><label for="off">Off</label>
+    <input type="radio" id="on" name="mode_select" value="on" /><label for="on">On</label>
+    <input type="radio" id="auto" name="mode_select" value="auto" /><label for="auto">Auto:</label>
+    <input type="text" id="temp" name="temp" maxlength="2" onfocus="document.new_event.auto.checked = true" style="width:18px" value="0"/>
     <br />
 
     <input type="submit" value="Create Event" />
