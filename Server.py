@@ -18,7 +18,12 @@ def onstart():
 @app.route('/', methods=['GET'])
 def rootdir():
     # This is a good place to start
-    message = "I'm a webpage... Probably"
+    temp_inside = 76
+    temp_outside = 70
+    fan_status = 'auto'
+    ac_status = 'auto'
+    events = [['MTWThF', '1200', 'ac', 'off'],
+              ['SuSa', '0330', 'ac', 'auto']]
     return flask.render_template('root.html', **locals())
 
 

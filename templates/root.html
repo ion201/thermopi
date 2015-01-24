@@ -18,6 +18,35 @@
             }
         }
     </script>
+    <script type="text/javascript">
+        function checkAll(field)
+        {
+            for (i = 0; i < field.length; i++){
+                field[i].checked = true;
+            }
+        }
+        function uncheckAll(field)
+        {
+            for (i = 0; i < field.length; i++){
+                field[i].checked = false;
+            }
+        }
+    </script>
+    <style type="text/css">
+        table.events_list td {
+            padding: 15px;
+            border-style: solid;
+            border-width: 1px;
+        }
+        table.events_list th {
+            border-style: solid;
+            border-width: 1px;
+        }
+        table.events_list {
+            border-style: none;
+            border-collapse: collapse;
+        }
+    </style>
 </head>
 
 <body style="margin:0px 10%">
@@ -48,23 +77,24 @@
 
 <h4>Events</h4>
 
-<table>
+<table class="events_list">
     <tr>
         <th>Days</th>
         <th>Time</th>
         <th>Device</th>
         <th>Set to</th>
+        <th></th>
     </tr>
-{% for event in events %}
-    {% for days, time, device, mode in event %}
+{% for days, time, device, mode in events %}
        <tr>
             <td>{{ days }}</td>
             <td>{{ time }}</td>
             <td>{{ device }}</td>
             <td>{{ mode }}</td>
-            <td><input type="button" value="Delete"/></td>
+            <td><a href="/"><img width=16 height=16
+                 src="{{ url_for('static', filename='trash_bin.jpg') }}" />
+                 </a></td>
        </tr>
-    {% endfor %}
 {% endfor %}
 </table>
 
@@ -73,7 +103,10 @@
 <h4>Create Event</h4>
 <form action="/newevent/" method="POST" enctype="multipart/form-data"
 onsubmit="return checkForm()" name="new_event">
-    <input type="checkbox" id="sunday" name="days_select" /><label for="sunday">Su</label>
+    <input type="button" onclick="checkAll(document.new_event.days_select)" value="Check All" />
+    <input type="button" onclick="uncheckAll(document.new_event.days_select)" value="Uncheck All" />
+    <br />
+    <input type="checkbox" id="sunday" name="days_select" /><label for="sunday">S</label>
     <input type="checkbox" id="monday" name="days_select" /><label for="monday">M</label>
     <input type="checkbox" id="tuesday" name="days_select" /><label for="tuesday">T</label>
     <input type="checkbox" id="wednesday" name="days_select" /><label for="wednesday">W</label>
@@ -81,7 +114,7 @@ onsubmit="return checkForm()" name="new_event">
     <input type="checkbox" id="friday" name="days_select" /><label for="friday">F</label>
     <input type="checkbox" id="saturday" name="days_select" /><label for="saturday">Sa</label>
     <br />
-    <label for="time">Time (military: 0000-2400):</label>
+    <label for="time">Time (Military time: 0000-2400):</label>
     <input type="text" style="width:50px;" name="time" id="time" />
     <br />
     <input type="radio" id="fan" name="device_select" checked /><label for="fan">Fan</label>
@@ -93,7 +126,7 @@ onsubmit="return checkForm()" name="new_event">
     <input type="radio" id="auto" name="mode_select" /><label for="auto">Auto</label>
     <br />
 
-    <input type="submit" value="Submit" />
+    <input type="submit" value="Create Event" />
 </form>
 
 </body>
