@@ -6,6 +6,8 @@ import pickle
 import time
 from urllib import request
 import json
+import threading
+import time
 
 import IO
 
@@ -16,20 +18,27 @@ app = flask.Flask(__name__)
 app.secret_key = os.urandom(32)
 
 
+def periodicrun(props):
+    global units, DEGREES
+    i = 0
+    while True:
+        time.sleep(1)
+        i += 1
+        if i % 5 == 0:
+            props['temp_inside'] = '%d %s%s' % (IO.gettemp(), DEGREES, units)
+        if i % 10 == 0:
+            with open('status.pickle', 'wb') as f:
+                pickle.dump(props, f, pickle.HIGHEST_PROTOCOL)
+        if i % 60 == 0:
+            props['temp_outside'] = '%s %s%s' % (getoutsidetemp(), DEGREES, units)
+        
+
 def getoutsidetemp():
     url = 'http://api.worldweatheronline.com/free/v2/weather.ashx'
     url += '?key=%s&q=%s&num_of_days=0&format=json' % (
           api_key, location)
     data = json.loads(request.urlopen(url).readall().decode('utf-8'))
     return data['data']['current_condition'][0]['temp_%s' % units]
-    
-
-def updatecontent():
-    props['temp_inside'] = '%d %s%s' % (IO.gettemp(), DEGREES, units)
-    props['temp_outside'] = '%s %s%s' % (getoutsidetemp(), DEGREES, units)
-    
-    with open('status.pickle', 'wb') as f:
-        pickle.dump(props, f, pickle.HIGHEST_PROTOCOL)
         
 
 @app.before_first_request
@@ -52,13 +61,18 @@ def onstart():
         
     with open('settings.conf', 'r') as settings_file:
         config = json.load(settings_file)
-    
+        
     global api_key, location, units
     api_key = config['api_key']
     location = config['location']
     units = config['units']
-
-    updatecontent()
+    
+    props['temp_inside'] = '%d %s%s' % (IO.gettemp(), DEGREES, units)
+    props['temp_outside'] = '%s %s%s' % (getoutsidetemp(), DEGREES, units)
+        
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        # Create this thread only once
+        threading.Thread(target=periodicrun, args=(props,)).start()
 
 
 @app.route('/newevent', methods=['GET', 'POST'])
@@ -77,7 +91,6 @@ def newevent():
         temp = 'n/a'
     
     props['events'].append([days, f['time'], f['device_select'], f['mode_select'], temp])
-    updatecontent()
     
     return flask.render_template('root.html', success_message='Event added!',
                                  **dict(props, **flask.session))
@@ -87,18 +100,15 @@ def newevent():
 def deleteevent():
     eventIndex = int(flask.request.args['index'])
     props['events'].pop(eventIndex)
-    updatecontent()
     return flask.redirect('/')
 
 
 @app.route('/', methods=['GET'])
 def rootdir():
     # This is a good place to start
-    updatecontent()
-    
     page = flask.render_template('root.html', **dict(props, **flask.session))
     return page
-
+    
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337, debug=True)
