@@ -4,3 +4,7 @@
 *.so
 build/
 __pycache__/
+
+settings.conf
+
+*.pickle
