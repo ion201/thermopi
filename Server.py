@@ -7,6 +7,8 @@ import time
 from urllib import request
 import json
 
+import IO
+
 
 app = flask.Flask(__name__)
 # Use this line to force cookies to expire
@@ -23,13 +25,11 @@ def getoutsidetemp():
     
 
 def updatecontent():
-    props['temp_inside'] = '76 %s%s' % (DEGREES, units)
+    props['temp_inside'] = '%d %s%s' % (IO.gettemp(), DEGREES, units)
     props['temp_outside'] = '%s %s%s' % (getoutsidetemp(), DEGREES, units)
-    props['fan_status'] = 'auto'
-    props['ac_status'] = 'auto'
     
-    with open('events.pickle', 'wb') as f:
-        pickle.dump(props['events'], f, pickle.HIGHEST_PROTOCOL)
+    with open('status.pickle', 'wb') as f:
+        pickle.dump(props, f, pickle.HIGHEST_PROTOCOL)
         
 
 @app.before_first_request
@@ -43,9 +43,11 @@ def onstart():
     days_short = {'sunday': 'S', 'monday': 'M', 'tuesday': 'T', 'wednesday': 'W',
                   'thursday': 'Th', 'friday': 'F', 'saturday': 'Sa'}
     try:
-        with open('events.pickle', 'rb') as f:
-            props['events'] = pickle.load(f)
+        with open('status.pickle', 'rb') as f:
+            props = pickle.load(f)
     except FileNotFoundError:
+        props['fan_status'] = 'auto'
+        props['ac_status'] = 'auto'
         props['events'] = []
         
     with open('settings.conf', 'r') as settings_file:
