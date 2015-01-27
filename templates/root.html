@@ -16,22 +16,31 @@
 <p style="color:red">{{ error_message }}</p>
 <p style="color:green">{{ success_message }}</p>
 
-<h4>Current Temperature</h4>
-<div id="temps" style="margin:0px 5%; width:360px">
+<div id="temps" style="margin:0 0">
     <div id="temp_inside" style="float:left; margin:0; width:50%">
-        {{ temp_inside }}
+        <h4>Inside temperature</h4>
+        <p>{{ temp_inside }}</p>
     </div>
     <div id="temp_outside" style="float:left; margin:0; width:50%">
-        {{ temp_outside }}
+        <h4>Outside temperature</h4>
+        <p>{{ temp_outside }}</p>
     </div>
 </div>
-<br />
-<br />
+<p>&nbsp;</p>
 
-<h4>Status/Manually Toggle</h4>
-<input type="submit" value="Toggle Fan" style="width:90px" /> Fan: {{ fan_status }}
-<br /><br />
-<input type="submit" value="Toggle AC" style="width:90px" /> AC: {{ ac_status }}
+<h4>Status/Manual Toggle</h4>
+<label for="trigger_temp">Auto trigger temp:</label>
+    <input id="trigger_temp" value="{{ trigger_temp  }}" name="trigger_temp" style="width: 18px"/><br />
+<label for="fan_status">Fan:</label>
+    <select id="fan_status" name="fan_status">
+    <option>auto</option><option>on</option><option>off</option></select><br />
+<label for="ac_status">AC:</label>
+    <select id="ac_status" name="ac_status">
+    <option>auto</option><option>on</option><option>off</option></select><br />
+<label for="heat_status">Heat:</label>
+    <select id="heat_status" name="heat_status">
+    <option>auto</option><option>on</option><option>off</option></select><br />
+<input type="submit" value="save" />
 
 <br /><br />
 

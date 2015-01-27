@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 
 
 def gettemp():
-    return 80
+    return 99
 
 
 def setfan(state):

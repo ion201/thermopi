@@ -5,6 +5,7 @@ import os
 import pickle
 import time
 from urllib import request
+from urllib.error import HTTPError
 import json
 import threading
 import time
@@ -37,9 +38,11 @@ def getoutsidetemp():
     url = 'http://api.worldweatheronline.com/free/v2/weather.ashx'
     url += '?key=%s&q=%s&num_of_days=0&format=json' % (
           api_key, location)
-    data = json.loads(request.urlopen(url).readall().decode('utf-8'))
-    return data['data']['current_condition'][0]['temp_%s' % units]
-        
+    try:
+        data = json.loads(request.urlopen(url).readall().decode('utf-8'))
+        return data['data']['current_condition'][0]['temp_%s' % units]
+    except HTTPError:
+        return "err"
 
 @app.before_first_request
 def onstart():
@@ -58,6 +61,7 @@ def onstart():
         props['fan_status'] = 'auto'
         props['ac_status'] = 'auto'
         props['events'] = []
+        props['trigger_temp'] = 99
         
     with open('settings.conf', 'r') as settings_file:
         config = json.load(settings_file)
