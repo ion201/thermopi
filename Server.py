@@ -122,7 +122,7 @@ def login():
     user = flask.request.form['username']
     # md5 hash is client-side because I'll be using http
     # Note: I'm aware md5 isn't wholly secure. I don't care because
-    # it's still substancially better than plain text
+    # it's still substantially better than plain text
     password = flask.request.form['password']
 
     with open('passwords.txt', 'r') as f:
