@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<head>
+    <title>Login</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <script src="{{ url_for('static', filename='md5.js') }}"></script>
+</head>
+
+<body>
+
+<p style="color:red">{{ error }}</p>
+
+<form action="/login" method="POST" enctype="multipart/form-data" name="login_form"
+    onsubmit="document.login_form.password.value=md5(document.login_form.password.value)">
+    <label for="username">Username:</label>
+        <input type="text" id="username" name="username" /><br />
+    <label for="password">Password:</label>
+        <input type="password" id="password" name="password" /><br />
+    <input type="submit" value="submit" />
+</form>
+
+</body>

@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# Do I really need all these imports?
+# ... probably :/
 import flask
 import os
 import pickle
@@ -9,6 +11,7 @@ from urllib.error import HTTPError
 import json
 import threading
 import time
+from hashlib import md5  # Super secure
 
 import IO
 
@@ -73,6 +76,10 @@ def onstart():
     
     props['temp_inside'] = '%d %s%s' % (IO.gettemp(), DEGREES, units)
     props['temp_outside'] = '%s %s%s' % (getoutsidetemp(), DEGREES, units)
+
+    if not os.path.exists('passwords.txt'):
+        with open('passwords.txt', 'w') as f:
+            f.write('admin:%s' % md5(b'admin').hexdigest())
         
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         # Create this thread only once
@@ -107,9 +114,33 @@ def deleteevent():
     return flask.redirect('/')
 
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if flask.request.method == 'GET':
+        return flask.render_template('login.html')
+        
+    user = flask.request.form['username']
+    # md5 hash is client-side because I'll be using http
+    # Note: I'm aware md5 isn't wholly secure. I don't care because
+    # it's still substancially better than plain text
+    password = flask.request.form['password']
+
+    with open('passwords.txt', 'r') as f:
+        users = dict(line.split(':') for line in f.read().split())
+
+    if password != users[user]:
+        return flask.render_template('login.html', error='Invalid username or password')
+
+    flask.session['current_user'] = user
+
+    return flask.redirect('/')
+
+
 @app.route('/', methods=['GET'])
 def rootdir():
     # This is a good place to start
+    if not 'current_user' in flask.session or not flask.session['current_user']:
+        return flask.redirect('/login')
     page = flask.render_template('root.html', **dict(props, **flask.session))
     return page
     
