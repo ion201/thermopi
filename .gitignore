@@ -10,3 +10,4 @@ settings.conf
 *.pickle
 
 passwords.txt
+user_requests.txt

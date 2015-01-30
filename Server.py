@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-# Do I really need all these imports?
-# ... probably :/
 import flask
 import os
 import pickle
@@ -79,7 +77,7 @@ def onstart():
 
     if not os.path.exists('passwords.txt'):
         with open('passwords.txt', 'w') as f:
-            f.write('admin:%s' % md5(b'admin').hexdigest())
+            f.write('admin:%s\n' % md5(b'admin').hexdigest())
         
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         # Create this thread only once
@@ -134,6 +132,56 @@ def login():
     flask.session['current_user'] = user
 
     return flask.redirect('/')
+
+@app.route('/logout', methods=['GET'])
+def logout():
+    flask.session['current_user'] = ''
+    return flask.redirect('/login')
+
+
+@app.route('/requestuser', methods=['GET', 'POST'])
+def requestuser():
+    if flask.request.method == 'GET':
+        return flask.redirect('/login')
+    
+    username = flask.request.form['req_username']
+    password = flask.request.form['req_password_1']
+    
+    with open('user_requests.txt', 'a') as f_req:
+        f_req.write('%s:%s\n' % (username, password))
+    
+    return flask.render_template('login.html', error='Request sent')
+
+@app.route('/admin', methods=['GET'])
+def adminpanel():
+    if flask.session['current_user'] != 'admin':
+        return flask.redirect('/')
+        
+    with open('user_requests.txt', 'r') as f_req:
+        request_users = dict(line.split(':') for line in f_req.read().split())
+    with open('passwords.txt', 'r') as f_users:
+        all_users = dict(line.split(':') for line in f_users.read().split())
+        
+    if flask.request.args:
+        if flask.request.args['action'] == 'confirm':
+            new_user = flask.request.args['user']
+            all_users[new_user] = request_users[new_user]
+            request_users.pop(new_user)
+        elif flask.request.args['action'] == 'deny':
+            request_users.pop(flask.request.args['user'])
+            
+        elif flask.request.args['action'] == 'delete':
+            if flask.request.args['user'] != 'admin':
+                all_users.pop(flask.request.args['user'])
+            
+        with open('user_requests.txt', 'w') as f_req:
+            for user, passwd in request_users.items():
+                f_req.write('%s:%s\n' % (user, passwd))
+        with open('passwords.txt', 'w') as f_users:
+            for user, passwd in all_users.items():
+                f_users.write('%s:%s\n' % (user, passwd))
+    
+    return flask.render_template('admin.html', requests=request_users.keys(), all_users=all_users)
 
 
 @app.route('/', methods=['GET'])

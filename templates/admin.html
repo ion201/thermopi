@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Admin Control Panel</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tablestyle.css') }}" />
+</head>
+
+<body>
+
+<a href="/">Back</a>
+
+<h4>User requests</h4>
+
+<table class="list">
+    <tr>
+        <th>User</th>
+        <th>Confirm</th>
+        <th>Deny</th>
+    </tr>
+    
+    {% for user in requests %}
+    <tr>
+        <td>{{ user }} </td>
+        <td><a href="/admin?action=confirm&user={{ user }}">
+            <img width=32 height=32 src="{{ url_for('static', filename='check.png') }}" /></td>
+        </a>
+        <td><a href="/admin?action=deny&user={{ user }}">
+            <img width=24 height=24 src="{{ url_for('static', filename='x-mark.png') }}" /></td>
+        </a>
+    </tr>
+    {% endfor %}
+</table>
+
+<br /><br />
+
+<table class="list">
+    <tr>
+        <th>User</th>
+        <th></th>
+    </tr>
+    
+    {% for user in all_users %}
+    <tr>
+        <td>{{ user }}</td>
+        <td><a href="/admin?action=delete&user={{ user }}"><img width=16 height=16
+                     src="{{ url_for('static', filename='trash_bin.jpg') }}" />
+        </a></td>
+    </tr>
+    {% endfor %}
+    
+</table>
+
+</body>
+
+</html>
