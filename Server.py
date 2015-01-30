@@ -10,6 +10,7 @@ import json
 import threading
 import time
 from hashlib import md5  # Super secure
+import logging
 
 import IO
 
@@ -48,6 +49,9 @@ def getoutsidetemp():
 @app.before_first_request
 def onstart():
     # Use this function to initialize modules and global vars
+    logging.basicConfig(filename='history.log', level=logging.WARNING,
+                        format='%(asctime)s %(message)s')
+    
     global DEGREES
     DEGREES = '°'
     
@@ -101,6 +105,8 @@ def newevent():
     
     props['events'].append([days, f['time'], f['device_select'], f['mode_select'], temp])
     
+    logging.warning('%s created event %s' % (flask.session['current_user'], str(props['events'][-1])))
+    
     return flask.render_template('root.html', success_message='Event added!',
                                  **dict(props, **flask.session))
 
@@ -108,6 +114,9 @@ def newevent():
 @app.route('/deleteevent', methods=['GET'])
 def deleteevent():
     eventIndex = int(flask.request.args['index'])
+    
+    logging.warning('%s deleted event %s' % (flask.session['current_user'], str(props['events'][eventIndex])))
+    
     props['events'].pop(eventIndex)
     return flask.redirect('/')
 
@@ -130,11 +139,13 @@ def login():
         return flask.render_template('login.html', error='Invalid username or password')
 
     flask.session['current_user'] = user
+    # logging.warning('%s logged in' % user)
 
     return flask.redirect('/')
 
 @app.route('/logout', methods=['GET'])
 def logout():
+    # logging.warning('%s logged out' % flask.session['current_user'])
     flask.session['current_user'] = ''
     return flask.redirect('/login')
 
