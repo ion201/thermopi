@@ -12,7 +12,7 @@ import time
 from hashlib import md5  # Super secure
 import logging
 
-import IO
+from IO import IO
 
 
 app = flask.Flask(__name__)
@@ -34,7 +34,7 @@ def periodicrun(props):
                 pickle.dump(props, f, pickle.HIGHEST_PROTOCOL)
         if i % 60 == 0:
             props['temp_outside'] = '%s %s%s' % (getoutsidetemp(), DEGREES, units)
-        
+
 
 def getoutsidetemp():
     url = 'http://api.worldweatheronline.com/free/v2/weather.ashx'
@@ -51,10 +51,10 @@ def onstart():
     # Use this function to initialize modules and global vars
     logging.basicConfig(filename='history.log', level=logging.WARNING,
                         format='%(asctime)s %(message)s')
-    
+
     global DEGREES
     DEGREES = '°'
-    
+
     global props, days_short
     props = {}
     days_short = {'sunday': 'S', 'monday': 'M', 'tuesday': 'T', 'wednesday': 'W',
@@ -63,48 +63,64 @@ def onstart():
         with open('status.pickle', 'rb') as f:
             props = pickle.load(f)
     except FileNotFoundError:
-        props['fan_status'] = 'auto'
-        props['ac_status'] = 'auto'
+        props['status_fan'] = 'auto'
+        props['status_ac'] = 'auto'
+        props['status_heat'] = 'auto'
         props['events'] = []
         props['trigger_temp'] = 99
-        
+
     with open('settings.conf', 'r') as settings_file:
         config = json.load(settings_file)
-        
+
+    IO.init(config)
+
     global api_key, location, units
     api_key = config['api_key']
     location = config['location']
     units = config['units']
-    
+    print(units)
+
     props['temp_inside'] = '%d %s%s' % (IO.gettemp(), DEGREES, units)
     props['temp_outside'] = '%s %s%s' % (getoutsidetemp(), DEGREES, units)
 
     if not os.path.exists('passwords.txt'):
         with open('passwords.txt', 'w') as f:
             f.write('admin:%s\n' % md5(b'admin').hexdigest())
-        
+
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         # Create this thread only once
         threading.Thread(target=periodicrun, args=(props,)).start()
+
+
+@app.route('/setstate', methods=['GET'])
+def setstate():
+    props['status_ac'] = flask.request.args['ac_status']
+    props['status_heat'] = flask.request.args['heat_status']
+    props['status_fan'] = flask.request.args['fan_status']
+    props['trigger_temp'] = int(flask.request.args['trigger_temp'])
+
+    logging.warning('%s set trigger temp to %i' % (props['current_user'], props['trigger_temp']))
+
+    return flask.redirect('/')
 
 
 @app.route('/newevent', methods=['GET', 'POST'])
 def newevent():
     if flask.request.method == 'GET':
         return flask.redirect('/')
-        
+
     f = flask.request.form.copy()
     days = ''
     for day in f.getlist('days_select'):
         days += days_short[day]
-    
+
     if f['mode_select'] == 'auto':
         temp = '%s %s%s' % (f['temp'], DEGREES, units)
     else:
         temp = 'n/a'
-    
+
     props['events'].append([days, f['time'], f['device_select'], f['mode_select'], temp])
-    
+
     logging.warning('%s created event %s' % (flask.session['current_user'], str(props['events'][-1])))
     
     return flask.render_template('root.html', success_message='Event added!',

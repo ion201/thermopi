@@ -25,10 +25,10 @@
     <tr>
         <td>{{ user }} </td>
         <td><a href="/admin?action=confirm&user={{ user }}">
-            <img width=32 height=32 src="{{ url_for('static', filename='check.png') }}" /></td>
+            <img width=32 height=32 src="static/icons/check.png" /></td>
         </a>
         <td><a href="/admin?action=deny&user={{ user }}">
-            <img width=24 height=24 src="{{ url_for('static', filename='x-mark.png') }}" /></td>
+            <img width=24 height=24 src="static/icons/x-mark.png" /></td>
         </a>
     </tr>
     {% endfor %}
@@ -46,7 +46,7 @@
     <tr>
         <td>{{ user }}</td>
         <td><a href="/admin?action=delete&user={{ user }}"><img width=16 height=16
-                     src="{{ url_for('static', filename='trash_bin.jpg') }}" />
+                     src="static/icons/trash_bin.jpg" />
         </a></td>
     </tr>
     {% endfor %}
