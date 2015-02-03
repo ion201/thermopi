@@ -1,26 +1,53 @@
 import RPi.GPIO as GPIO
 
+class IO:
+    def init(config):
+        GPIO.setmode(GPIO.BOARD)
 
-# GPIO.output(18, 0)  # Turn fan on
-# GPIO.output(18, 1)  # Turn fan off
-# GPIO.output(16, 0)  # Turn AC on
-# GPIO.output(16, 1)  # Turn AC off
+        IO.ch_fan = int(config['gpio_channel_fan'])
+        GPIO.setup(IO.ch_fan, GPIO.OUT, initial=1)
+        try:
+            IO.ch_ac = int(config['gpio_channel_ac'])
+            GPIO.setup(IO.ch_ac, GPIO.OUT, initial=1)
+        except ValueError:
+            IO.ch_ac = None
+        try:
+            IO.ch_heat = int(config['gpio_channel_heat'])
+            GPIO.setup(IO.ch_heat, GPIO.OUT, initial=1)
+        except ValueError:
+            IO.ch_heat = None
 
-def setup():
-    GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(18, GPIO.OUT, initial=1)
-    GPIO.setup(16, GPIO.OUT, initial=1)
-
-
-def gettemp():
-    return 99
-
-
-def setfan(state):
-    pass
+        units = config['units']  # 'F' or 'C'
 
 
-def setac(state):
-    if state:
-        # Always turn on the fan when the ac is on
-        setfan(True)
+    def cleanup():
+        GPIO.cleanup()
+
+
+    def gettemp():
+        return 99
+
+
+    def setfan(state):
+        """True -> on; False -> off; (or anything which will eval to t/f)"""
+        GPIO.output(IO.ch_fan, not state)
+
+
+    def setac(state):
+        if not IO.ch_ac:
+            return
+
+        if state:  # if the ac is on, the fan must be
+            setfan(True)
+
+        GPIO.output(IO.ch_ac, not state)
+
+
+    def setheat(state):
+        if not IO.ch_heat:
+            return
+
+        if state:
+            setfan(state)
+
+        GPIO.output(IO.ch_heat, not state)
