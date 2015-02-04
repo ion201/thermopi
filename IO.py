@@ -25,6 +25,7 @@ class IO:
 
 
     def gettemp():
+        # /sys/bus/w1/devices/28-000006153d8f/w1_slave, t=[temp] on second line
         return 99
 
 
