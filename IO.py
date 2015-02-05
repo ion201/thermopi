@@ -3,6 +3,8 @@ import RPi.GPIO as GPIO
 class IO:
     def init(config):
         GPIO.setmode(GPIO.BOARD)
+        
+        GPIO.cleanup()
 
         IO.ch_fan = int(config['gpio_channel_fan'])
         GPIO.setup(IO.ch_fan, GPIO.OUT, initial=1)
@@ -17,16 +19,25 @@ class IO:
         except ValueError:
             IO.ch_heat = None
 
-        units = config['units']  # 'F' or 'C'
+        IO.units = config['units']  # 'F' or 'C'
 
-
-    def cleanup():
-        GPIO.cleanup()
+        IO.therm_device_id = config['therm_device_id']
 
 
     def gettemp():
         # /sys/bus/w1/devices/28-000006153d8f/w1_slave, t=[temp] on second line
-        return 99
+        if not IO.therm_device_id:
+            return 0
+
+        path = '/sys/bus/w1/devices/%s/w1_slave' % IO.therm_device_id
+        with open(path, 'r') as f:
+            temp = float(f.read().split('=')[-1]) / 1000
+
+        if IO.units == 'F':  # Device reads in Celcius
+            temp = temp * 1.8 + 32
+        round(temp, 1)
+
+        return temp
 
 
     def setfan(state):

@@ -88,7 +88,7 @@ def onstart():
             f.write('admin:%s\n' % md5(b'admin').hexdigest())
 
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        # Create this thread only once
+        # Run these functions only once; not when reloaded
         threading.Thread(target=periodicrun, args=(props,)).start()
 
 
@@ -99,17 +99,14 @@ def setstate():
     props['status_fan'] = flask.request.args['fan_status']
     props['trigger_temp'] = int(flask.request.args['trigger_temp'])
 
-    logging.warning('%s set trigger temp to %i' % (props['current_user'], props['trigger_temp']))
+    logging.warning('%s set trigger temp to %i' % (flask.session['current_user'], props['trigger_temp']))
 
     return flask.redirect('/')
 
 
-@app.route('/newevent', methods=['GET', 'POST'])
+@app.route('/newevent', methods=['GET'])
 def newevent():
-    if flask.request.method == 'GET':
-        return flask.redirect('/')
-
-    f = flask.request.form.copy()
+    f = flask.request.args.copy()
     days = ''
     for day in f.getlist('days_select'):
         days += days_short[day]
@@ -123,8 +120,7 @@ def newevent():
 
     logging.warning('%s created event %s' % (flask.session['current_user'], str(props['events'][-1])))
     
-    return flask.render_template('root.html', success_message='Event added!',
-                                 **dict(props, **flask.session))
+    return flask.redirect('/')
 
 
 @app.route('/deleteevent', methods=['GET'])
