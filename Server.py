@@ -11,6 +11,7 @@ import threading
 import time
 from hashlib import md5  # Super secure
 import logging
+import shutil
 
 from IO import IO
 
@@ -68,6 +69,9 @@ def onstart():
         props['status_heat'] = 'auto'
         props['events'] = []
         props['trigger_temp'] = 99
+
+    if not os.path.exists('settings.conf'):
+        shutil.copy2('sample_settings.conf', 'settings.conf')
 
     with open('settings.conf', 'r') as settings_file:
         config = json.load(settings_file)
