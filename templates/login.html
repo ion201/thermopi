@@ -9,6 +9,11 @@
         form.value = md5(form.value);
     }
     
+    function md5SaltFormValue(form)
+    {
+        form.value = md5(md5(form.value) + "{{ secret }}");
+    }
+    
     function checkFormMatch(form1, form2)
     {
         if (md5(form1.value) != md5(form2.value)){
@@ -27,7 +32,7 @@
 <p id="error_1" style="color:red">{{ error }}</p>
 
 <form action="/login" method="POST" enctype="multipart/form-data" name="login_form"
-    onsubmit="md5FormValue(document.login_form.password)">
+    onsubmit="md5SaltFormValue(document.login_form.password)">
     <label for="username">Name:</label>
         <input type="text" id="username" name="username" /><br />
     <label for="password">Password:</label>

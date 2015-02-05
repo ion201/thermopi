@@ -10,6 +10,7 @@ import json
 import threading
 import time
 from hashlib import md5  # Super secure
+import random
 import logging
 import shutil
 
@@ -139,20 +140,25 @@ def deleteevent():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """How authentification works:
+    Account setup: password is transferred as a plain text md5 hash
+        and is vulnerable to interception over http at this time
+    Normal login: GET request generates new 64-byte random secret which is embedded in the page js.
+        When a password is entered, we get the md5 hash then append the secret to this hash
+        and then hash it again.
+        Result: an attackter cannot use intercepted data to log in :)"""
     if flask.request.method == 'GET':
-        return flask.render_template('login.html')
-        
+        flask.session['session_salt'] = ''.join(chr(random.randint(97, 122)) for i in range(64))
+        return flask.render_template('login.html', secret=flask.session['session_salt'])
+
     user = flask.request.form['username']
-    # md5 hash is client-side because I'll be using http
-    # Note: I'm aware md5 isn't wholly secure. I don't care because
-    # it's still substantially better than plain text
     password = flask.request.form['password']
 
     with open('passwords.txt', 'r') as f:
-        users = dict(line.split(':') for line in f.read().split())
+        passwords = dict(line.split(':') for line in f.read().split())
 
-    if password != users[user]:
-        return flask.render_template('login.html', error='Invalid username or password')
+    if password != md5((passwords[user] + flask.session['session_salt']).encode('utf-8')).hexdigest():
+        return flask.render_template('login.html', error='Invalid username or password', secret=flask.session['session_salt'])
 
     flask.session['current_user'] = user
     # logging.warning('%s logged in' % user)
@@ -177,7 +183,7 @@ def requestuser():
     with open('user_requests.txt', 'a') as f_req:
         f_req.write('%s:%s\n' % (username, password))
     
-    return flask.render_template('login.html', error='Request sent')
+    return flask.render_template('login.html', error='Request sent', secret=flask.session['session_salt'])
 
 @app.route('/admin', methods=['GET'])
 def adminpanel():
