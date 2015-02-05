@@ -103,7 +103,7 @@
 <br />
 
 <h4>Create Event</h4>
-<form action="/newevent" method="POST" enctype="multipart/form-data"
+<form action="/newevent" method="GET" enctype="multipart/form-data"
 onsubmit="return (checkFormValue(document.new_event.time) && checkFormValue(document.new_event.temp))" name="new_event">
     <input type="button" onclick="checkAll(document.new_event.days_select)" value="Check All" />
     <input type="button" onclick="uncheckAll(document.new_event.days_select)" value="Uncheck All" />
