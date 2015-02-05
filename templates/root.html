@@ -35,9 +35,9 @@
 <h4>Status/Manual Toggle</h4>
 <form action='/setstate' method="GET" enctype="multipart/form-data" name="set_state">
     <label for="trigger_temp">Auto trigger temp:</label>
-        <input id="trigger_temp" value="{{ trigger_temp  }}" name="trigger_temp" style="width: 18px"/>
-    <img src="static/icons/minus.png" width=16 height=16/ onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value-1" />
-    <img src="static/icons/plus.png" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value+1" />&nbsp;
+        <input id="trigger_temp" value="{{ trigger_temp  }}" name="trigger_temp" style="width: 18px" maxlength="2" />
+    <img src="static/icons/minus.png" style="cursor: pointer" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value-1" />
+    <img src="static/icons/plus.png" style="cursor: pointer" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value+1" />&nbsp;
     <br />
     {% set options = ['auto', 'on', 'off'] %}
     <label for="fan_status">Fan:</label>

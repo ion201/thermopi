@@ -33,7 +33,7 @@ class IO:
         with open(path, 'r') as f:
             temp = float(f.read().split('=')[-1]) / 1000
 
-        if IO.units == 'F':  # Device reads in Celcius
+        if IO.units == 'F':  # Device reads in Celsius
             temp = temp * 1.8 + 32
         round(temp, 1)
 
