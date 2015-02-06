@@ -22,11 +22,11 @@
 <div id="temps" style="margin:0 0">
     <div id="temp_inside" style="float:left; margin:0; width:50%">
         <h4>Inside temperature</h4>
-        <p>{{ temp_inside }}</p>
+        <p>{{ temp_inside }} °{{ units }}</p>
     </div>
     <div id="temp_outside" style="float:left; margin:0; width:50%">
         <h4>Outside temperature</h4>
-        <p>{{ temp_outside }}</p>
+        <p>{{ temp_outside }} °{{ units }}</p>
     </div>
 </div>
 <p>&nbsp;</p>
@@ -92,7 +92,7 @@
         <td>{{ time }}</td>
         <td>{{ device }}</td>
         <td>{{ mode }}</td>
-        <td>{{ temp }}</td>
+        <td>{{ temp }} °{{ units }}</td>
         <td><a href="/deleteevent?index={{ loop.index0  }}"><img width=16 height=16
              src="static/icons/trash_bin.jpg" />
              </a></td>

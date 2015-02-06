@@ -3,18 +3,19 @@ import RPi.GPIO as GPIO
 class IO:
     def init(config):
         GPIO.setmode(GPIO.BOARD)
-        
-        GPIO.cleanup()
 
         IO.ch_fan = int(config['gpio_channel_fan'])
+        GPIO.cleanup(IO.ch_fan)
         GPIO.setup(IO.ch_fan, GPIO.OUT, initial=1)
         try:
             IO.ch_ac = int(config['gpio_channel_ac'])
+            GPIO.cleanup(IO.ch_ac)
             GPIO.setup(IO.ch_ac, GPIO.OUT, initial=1)
         except ValueError:
             IO.ch_ac = None
         try:
             IO.ch_heat = int(config['gpio_channel_heat'])
+            GPIO.cleanup(IO.ch_heat)
             GPIO.setup(IO.ch_heat, GPIO.OUT, initial=1)
         except ValueError:
             IO.ch_heat = None

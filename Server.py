@@ -24,18 +24,18 @@ app.secret_key = os.urandom(32)
 
 
 def periodicrun(props):
-    global units, DEGREES
+    global DEGREES
     i = 0
     while True:
         time.sleep(1)
         i += 1
         if i % 5 == 0:
-            props['temp_inside'] = '%d %s%s' % (IO.gettemp(), DEGREES, units)
+            props['temp_inside'] = '%.1f' % IO.gettemp()
         if i % 10 == 0:
             with open('status.pickle', 'wb') as f:
                 pickle.dump(props, f, pickle.HIGHEST_PROTOCOL)
         if i % 60 == 0:
-            props['temp_outside'] = '%s %s%s' % (getoutsidetemp(), DEGREES, units)
+            props['temp_outside'] = getoutsidetemp()
 
 
 def getoutsidetemp():
@@ -44,9 +44,14 @@ def getoutsidetemp():
           api_key, location)
     try:
         data = json.loads(request.urlopen(url).readall().decode('utf-8'))
-        return data['data']['current_condition'][0]['temp_%s' % units]
+        return data['data']['current_condition'][0]['temp_%s' % props['units']]
     except HTTPError:
         return "err"
+
+
+def gensecret():
+    flask.session['session_salt'] = ''.join(chr(random.randint(97, 122)) for i in range(64))
+
 
 @app.before_first_request
 def onstart():
@@ -79,14 +84,13 @@ def onstart():
 
     IO.init(config)
 
-    global api_key, location, units
+    global api_key, location
     api_key = config['api_key']
     location = config['location']
-    units = config['units']
-    print(units)
+    props['units'] = config['units']
 
-    props['temp_inside'] = '%d %s%s' % (IO.gettemp(), DEGREES, units)
-    props['temp_outside'] = '%s %s%s' % (getoutsidetemp(), DEGREES, units)
+    props['temp_inside'] = '%.1f' % IO.gettemp()
+    props['temp_outside'] = getoutsidetemp()
 
     if not os.path.exists('passwords.txt'):
         with open('passwords.txt', 'w') as f:
@@ -117,9 +121,9 @@ def newevent():
         days += days_short[day]
 
     if f['mode_select'] == 'auto':
-        temp = '%s %s%s' % (f['temp'], DEGREES, units)
+        temp = f['temp']
     else:
-        temp = 'n/a'
+        temp = ''
 
     props['events'].append([days, f['time'], f['device_select'], f['mode_select'], temp])
 
@@ -148,7 +152,7 @@ def login():
         and then hash it again.
         Result: an attackter cannot use intercepted data to log in :)"""
     if flask.request.method == 'GET':
-        flask.session['session_salt'] = ''.join(chr(random.randint(97, 122)) for i in range(64))
+        gensecret()
         return flask.render_template('login.html', secret=flask.session['session_salt'])
 
     user = flask.request.form['username']
@@ -160,6 +164,7 @@ def login():
     if password != md5((passwords[user] + flask.session['session_salt']).encode('utf-8')).hexdigest():
         return flask.render_template('login.html', error='Invalid username or password', secret=flask.session['session_salt'])
 
+    gensecret()  #Create a new secret after succesfful login
     flask.session['current_user'] = user
     # logging.warning('%s logged in' % user)
 
@@ -225,6 +230,19 @@ def rootdir():
     page = flask.render_template('root.html', **dict(props, **flask.session))
     return page
     
+
+@app.route('/api-get', methods=['GET'])
+def apiget():
+    """Get information only. json formatted"""
+
+    return flask.render_template('api.html', **props)
+
+
+@app.route('/api-post', methods=['GET'])
+def apipost():
+    """Use get request args to set server data"""
+    return flask.render_template('api.html', **props)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337, debug=True)
