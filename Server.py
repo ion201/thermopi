@@ -5,7 +5,7 @@ import os
 import pickle
 import time
 from urllib import request
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 import json
 import threading
 import time
@@ -31,9 +31,29 @@ def periodicrun(props):
         i += 1
         if i % 5 == 0:
             props['temp_inside'] = '%.1f' % IO.gettemp()
+            
         if i % 10 == 0:
             with open('status.pickle', 'wb') as f:
                 pickle.dump(props, f, pickle.HIGHEST_PROTOCOL)
+                
+            if props['status_ac'] == 'on':
+                IO.setac(1)
+            if props['status_ac'] == 'off':
+                IO.setac(0)
+            if props['status_ac'] == 'auto':
+                IO.setac(0) if IO.gettemp() < props['trigger_temp'] else IO.setac(1)
+                
+            if props['status_heat'] == 'on':
+                IO.setheat(1)
+            if props['status_heat'] == 'off':
+                IO.setheat(0)
+            if props['status_heat'] == 'auto':
+                IO.setheat(0) if IO.gettemp() > props['trigger_temp'] else IO.setheat(1)
+                
+            if props['status_fan'] == 'on':
+                # 'auto' is managed by IO.setx to ensure it is always on when the ac or heat is.
+                IO.setfan(1)
+
         if i % 60 == 0:
             props['temp_outside'] = getoutsidetemp()
 
@@ -45,7 +65,7 @@ def getoutsidetemp():
     try:
         data = json.loads(request.urlopen(url).readall().decode('utf-8'))
         return data['data']['current_condition'][0]['temp_%s' % props['units']]
-    except HTTPError:
+    except (HTTPError, URLError):
         return "err"
 
 
@@ -71,10 +91,10 @@ def onstart():
             props = pickle.load(f)
     except FileNotFoundError:
         props['status_fan'] = 'auto'
-        props['status_ac'] = 'auto'
-        props['status_heat'] = 'auto'
+        props['status_ac'] = 'off'
+        props['status_heat'] = 'off'
         props['events'] = []
-        props['trigger_temp'] = 99
+        props['trigger_temp'] = 75
 
     if not os.path.exists('settings.conf'):
         shutil.copy2('sample_settings.conf', 'settings.conf')
@@ -235,12 +255,6 @@ def rootdir():
 def apiget():
     """Get information only. json formatted"""
 
-    return flask.render_template('api.html', **props)
-
-
-@app.route('/api-post', methods=['GET'])
-def apipost():
-    """Use get request args to set server data"""
     return flask.render_template('api.html', **props)
 
 

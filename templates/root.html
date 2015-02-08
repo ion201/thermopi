@@ -39,7 +39,7 @@
     <img src="static/icons/minus.png" style="cursor: pointer" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value-1" />
     <img src="static/icons/plus.png" style="cursor: pointer" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value+1" />&nbsp;
     <br />
-    {% set options = ['auto', 'on', 'off'] %}
+    {% set options = ['auto', 'on'] %}
     <label for="fan_status">Fan:</label>
     <select id="fan_status" name="fan_status">
     {% for option in options %}
@@ -50,6 +50,7 @@
         {% endif %}
     {% endfor %}
     </select><br />
+    {% set options = ['auto', 'on', 'off'] %}
     <label for="ac_status">AC:</label>
     <select id="ac_status" name="ac_status">
     {% for option in options %}

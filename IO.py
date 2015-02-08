@@ -3,20 +3,21 @@ import RPi.GPIO as GPIO
 class IO:
     def init(config):
         GPIO.setmode(GPIO.BOARD)
+        GPIO.setwarnings(False)
 
         IO.ch_fan = int(config['gpio_channel_fan'])
         GPIO.cleanup(IO.ch_fan)
-        GPIO.setup(IO.ch_fan, GPIO.OUT, initial=1)
+        GPIO.setup(IO.ch_fan, GPIO.OUT, initial=0)
         try:
             IO.ch_ac = int(config['gpio_channel_ac'])
             GPIO.cleanup(IO.ch_ac)
-            GPIO.setup(IO.ch_ac, GPIO.OUT, initial=1)
+            GPIO.setup(IO.ch_ac, GPIO.OUT, initial=0)
         except ValueError:
             IO.ch_ac = None
         try:
             IO.ch_heat = int(config['gpio_channel_heat'])
             GPIO.cleanup(IO.ch_heat)
-            GPIO.setup(IO.ch_heat, GPIO.OUT, initial=1)
+            GPIO.setup(IO.ch_heat, GPIO.OUT, initial=0)
         except ValueError:
             IO.ch_heat = None
 
@@ -43,24 +44,20 @@ class IO:
 
     def setfan(state):
         """True -> on; False -> off; (or anything which will eval to t/f)"""
-        GPIO.output(IO.ch_fan, not state)
+        GPIO.output(IO.ch_fan, state)
 
 
     def setac(state):
         if not IO.ch_ac:
             return
 
-        if state:  # if the ac is on, the fan must be
-            setfan(True)
-
-        GPIO.output(IO.ch_ac, not state)
+        IO.setfan(state)
+        GPIO.output(IO.ch_ac, state)
 
 
     def setheat(state):
         if not IO.ch_heat:
             return
 
-        if state:
-            setfan(state)
-
-        GPIO.output(IO.ch_heat, not state)
+        IO.setfan(state)
+        GPIO.output(IO.ch_heat, state)
