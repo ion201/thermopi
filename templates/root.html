@@ -40,8 +40,8 @@
     <img src="static/icons/plus.png" style="cursor: pointer" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value+1" />&nbsp;
     <br />
     {% set options = ['auto', 'on'] %}
-    <label for="fan_status">Fan:</label>
-    <select id="fan_status" name="fan_status">
+    <label for="status_fan">Fan:</label>
+    <select id="status_fan" name="status_fan">
     {% for option in options %}
         {% if status_fan == option %}
             <option selected="selected">{{ option }}</option>
@@ -51,8 +51,8 @@
     {% endfor %}
     </select><br />
     {% set options = ['auto', 'on', 'off'] %}
-    <label for="ac_status">AC:</label>
-    <select id="ac_status" name="ac_status">
+    <label for="status_ac">AC:</label>
+    <select id="status_ac" name="status_ac">
     {% for option in options %}
         {% if status_ac == option %}
             <option selected="selected">{{ option }}</option>
@@ -61,8 +61,8 @@
         {% endif %}
     {% endfor %}
     </select><br />
-    <label for="heat_status">Heat:</label>
-    <select id="heat_status" name="heat_status">
+    <label for="status_heat">Heat:</label>
+    <select id="status_heat" name="status_heat">
     {% for option in options %}
         {% if status_heat == option %}
             <option selected="selected">{{ option }}</option>

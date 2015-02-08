@@ -65,12 +65,19 @@ def getoutsidetemp():
     try:
         data = json.loads(request.urlopen(url).readall().decode('utf-8'))
         return data['data']['current_condition'][0]['temp_%s' % props['units']]
-    except (HTTPError, URLError):
+    except (HTTPError, URLError) as e:
+        logging.warning(e.args[0])
         return "err"
 
 
 def gensecret():
     flask.session['session_salt'] = ''.join(chr(random.randint(97, 122)) for i in range(64))
+    
+    
+def validateuser():
+    if 'current_user' not in flask.session or not flask.session['current_user']:
+        return False
+    return True
 
 
 @app.before_first_request
@@ -123,18 +130,27 @@ def onstart():
 
 @app.route('/setstate', methods=['GET'])
 def setstate():
-    props['status_ac'] = flask.request.args['ac_status']
-    props['status_heat'] = flask.request.args['heat_status']
-    props['status_fan'] = flask.request.args['fan_status']
+    if flask.request.args['status_heat'] == 'off':
+        props['status_ac'] = flask.request.args['status_ac']
+    if flask.request.args['status_ac'] == 'off':
+        props['status_heat'] = flask.request.args['status_heat']
+    props['status_fan'] = flask.request.args['status_fan']
     props['trigger_temp'] = int(flask.request.args['trigger_temp'])
+    
+    user = flask.session['current_user']
 
-    logging.warning('%s set trigger temp to %i' % (flask.session['current_user'], props['trigger_temp']))
+    logging.warning('%s set- fan:%s ac:%s heat:%s temp:%s' % (user, props['status_fan'], props['status_ac'],
+                                                              props['status_heat'], props['trigger_temp']))
 
     return flask.redirect('/')
 
 
 @app.route('/newevent', methods=['GET'])
 def newevent():
+    validation = validateuser()
+    if not validation:
+        return flask.redirect('/')
+
     f = flask.request.args.copy()
     days = ''
     for day in f.getlist('days_select'):
@@ -154,6 +170,10 @@ def newevent():
 
 @app.route('/deleteevent', methods=['GET'])
 def deleteevent():
+    validation = validateuser()
+    if not validation:
+        return flask.redirect('/')
+
     eventIndex = int(flask.request.args['index'])
     
     logging.warning('%s deleted event %s' % (flask.session['current_user'], str(props['events'][eventIndex])))
@@ -212,7 +232,7 @@ def requestuser():
 
 @app.route('/admin', methods=['GET'])
 def adminpanel():
-    if flask.session['current_user'] != 'admin':
+    if 'current_user' in flask.session and flask.session['current_user'] != 'admin':
         return flask.redirect('/')
         
     with open('user_requests.txt', 'r') as f_req:
@@ -245,8 +265,10 @@ def adminpanel():
 @app.route('/', methods=['GET'])
 def rootdir():
     # This is a good place to start
-    if not 'current_user' in flask.session or not flask.session['current_user']:
+    validation = validateuser()
+    if not validation:
         return flask.redirect('/login')
+    
     page = flask.render_template('root.html', **dict(props, **flask.session))
     return page
     
