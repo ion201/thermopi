@@ -8,7 +8,6 @@ from urllib import request
 from urllib.error import HTTPError, URLError
 import json
 import threading
-import time
 from hashlib import md5  # Super secure
 import random
 import logging
