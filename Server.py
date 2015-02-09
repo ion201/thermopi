@@ -25,10 +25,15 @@ app.secret_key = os.urandom(32)
 
 def periodicrun(props):
     global DEGREES
+    
+    day_map = [('Sa', '5'), ('F', '4'), ('Th', '3'),
+               ('W', '2'), ('T', '1'), ('M', '0'), ('S', '6')]
+    
     i = 0
     while True:
         time.sleep(1)
         i += 1
+        
         if i % 5 == 0:
             props['temp_inside'] = '%.1f' % IO.gettemp()
             
@@ -53,6 +58,23 @@ def periodicrun(props):
             if props['status_fan'] == 'on':
                 # 'auto' is managed by IO.setx to ensure it is always on when the ac or heat is.
                 IO.setfan(1)
+                
+        if i % 31 == 0:
+            t = time.localtime()
+            year, month, day, hour, minute = t[:5]
+            weekday = t[6]
+
+            for event in props['events']:
+                weekdays = event[0]
+                for d in day_map:
+                    weekdays = weekdays.replace(d[0], d[1])
+                    
+                if str(weekday) not in weekdays:
+                    continue
+                t = event[1]  # Time format: 'hhmm'
+                if int(t[2:]) != hour or int(t[:2]) != minute:
+                    continue
+                # Time for an event! Do something?
 
         if i % 60 == 0:
             props['temp_outside'] = getoutsidetemp()
@@ -154,12 +176,12 @@ def onstart():
 @app.route('/setstate', methods=['GET'])
 def setstate():
     global api_user_salts
-    if 'api_login' in flask.request.args:
+    if 'user' in flask.request.args:
         user = flask.request.args['user']
         password_md5 = flask.request.args['password_hash']
         if (not user in api_user_salts or 
             not checkpassword(user, password_md5, api_user_salts[user])):
-            
+
             return '403'
         # API will never see this new salt
         # This is just done to get rid of the old one
@@ -174,7 +196,7 @@ def setstate():
     props['status_fan'] = flask.request.args['status_fan']
     props['trigger_temp'] = int(flask.request.args['trigger_temp'])
 
-    logging.warning('%s set- fan:%s ac:%s heat:%s temp:%s' % (user, props['status_fan'], props['status_ac'],
+    logging.warning('%s set fan:%s ac:%s heat:%s temp:%s' % (user, props['status_fan'], props['status_ac'],
                                                               props['status_heat'], props['trigger_temp']))
 
     return flask.redirect('/')
@@ -195,8 +217,12 @@ def newevent():
         temp = f['temp']
     else:
         temp = ''
+        
+    t = f['time']
+    while len(t) <= 4:
+        t = '0' + t
 
-    props['events'].append([days, f['time'], f['device_select'], f['mode_select'], temp])
+    props['events'].append([days, t, f['device_select'], f['mode_select'], temp])
 
     logging.warning('%s created event %s' % (flask.session['current_user'], str(props['events'][-1])))
     
