@@ -1,14 +1,11 @@
 # Byte/compiled files
-
 *.py[cod]
 *.so
-build/
 __pycache__/
 
+# User-generated files
 settings.conf
-
 *.pickle
-
 passwords.txt
 user_requests.txt
 history.log
