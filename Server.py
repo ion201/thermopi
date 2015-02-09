@@ -273,8 +273,8 @@ def rootdir():
     return page
     
 
-@app.route('/api-get', methods=['GET'])
-def apiget():
+@app.route('/api', methods=['GET'])
+def api():
     """Get information only. json formatted"""
 
     return flask.render_template('api.html', **props)
