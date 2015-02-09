@@ -61,7 +61,7 @@ def periodicrun(props):
 def getoutsidetemp():
     url = 'http://api.worldweatheronline.com/free/v2/weather.ashx'
     url += '?key=%s&q=%s&num_of_days=0&format=json' % (
-          api_key, location)
+          weather_api_key, location)
     try:
         data = json.loads(request.urlopen(url).readall().decode('utf-8'))
         return data['data']['current_condition'][0]['temp_%s' % props['units']]
@@ -71,14 +71,34 @@ def getoutsidetemp():
 
 
 def gensecret():
-    flask.session['session_salt'] = ''.join(chr(random.randint(97, 122)) for i in range(64))
+    return ''.join(chr(random.randint(97, 122)) for i in range(64))
+
+
+@app.route('/apigensalt', methods=['GET'])
+def apigensecret():
+    user = flask.request.args['user']
+    api_user_salts[user] = gensecret()
     
-    
+    return api_user_salts[user]
+
+
 def validateuser():
     if 'current_user' not in flask.session or not flask.session['current_user']:
         return False
     return True
+    
+    
+def checkpassword(user, password_md5, secret_salt):
+    """password_md5 should already be an md5 sum of the user's password,
+    then md5'd again with the secret key before being sent over http"""
+    global passwords
+    
+    with open('passwords.txt', 'r') as f:
+        passwords = dict(line.split(':') for line in f.read().split())
 
+    if password_md5 == md5((passwords[user] + secret_salt).encode('utf-8')).hexdigest():
+        return True
+    return False
 
 @app.before_first_request
 def onstart():
@@ -111,8 +131,8 @@ def onstart():
 
     IO.init(config)
 
-    global api_key, location
-    api_key = config['api_key']
+    global weather_api_key, location
+    weather_api_key = config['weather_api_key']
     location = config['location']
     props['units'] = config['units']
 
@@ -123,6 +143,9 @@ def onstart():
         with open('passwords.txt', 'w') as f:
             f.write('admin:%s\n' % md5(b'admin').hexdigest())
 
+    global api_user_salts
+    api_user_salts = {}
+
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         # Run these functions only once; not when reloaded
         threading.Thread(target=periodicrun, args=(props,)).start()
@@ -130,14 +153,26 @@ def onstart():
 
 @app.route('/setstate', methods=['GET'])
 def setstate():
+    global api_user_salts
+    if 'api_login' in flask.request.args:
+        user = flask.request.args['user']
+        password_md5 = flask.request.args['password_hash']
+        if (not user in api_user_salts or 
+            not checkpassword(user, password_md5, api_user_salts[user])):
+            
+            return '403'
+        # API will never see this new salt
+        # This is just done to get rid of the old one
+        api_user_salts[user] = gensecret()
+    else:
+        user = flask.session['current_user']
+
     if flask.request.args['status_heat'] == 'off':
         props['status_ac'] = flask.request.args['status_ac']
     if flask.request.args['status_ac'] == 'off':
         props['status_heat'] = flask.request.args['status_heat']
     props['status_fan'] = flask.request.args['status_fan']
     props['trigger_temp'] = int(flask.request.args['trigger_temp'])
-    
-    user = flask.session['current_user']
 
     logging.warning('%s set- fan:%s ac:%s heat:%s temp:%s' % (user, props['status_fan'], props['status_ac'],
                                                               props['status_heat'], props['trigger_temp']))
@@ -192,7 +227,7 @@ def login():
         and then hash it again.
         Result: an attackter cannot use intercepted data to log in :)"""
     if flask.request.method == 'GET':
-        gensecret()
+        flask.session['session_salt'] = gensecret()
         return flask.render_template('login.html', secret=flask.session['session_salt'])
 
     user = flask.request.form['username']
@@ -201,10 +236,11 @@ def login():
     with open('passwords.txt', 'r') as f:
         passwords = dict(line.split(':') for line in f.read().split())
 
-    if password != md5((passwords[user] + flask.session['session_salt']).encode('utf-8')).hexdigest():
-        return flask.render_template('login.html', error='Invalid username or password', secret=flask.session['session_salt'])
+    if not checkpassword(user, password, flask.session['session_salt']):
+        return flask.render_template('login.html', error='Invalid username or password',
+                                     secret=flask.session['session_salt'])
 
-    gensecret()  #Create a new secret after succesfful login
+    flask.session['session_salt'] = gensecret()  #Create a new secret after succesfful login
     flask.session['current_user'] = user
     # logging.warning('%s logged in' % user)
 
