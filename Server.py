@@ -188,12 +188,17 @@ def setstate():
     else:
         user = flask.session['current_user']
 
-    if flask.request.args['status_heat'] == 'off':
+    if ('status_ac' in flask.request.args and
+       ('status_heat' not in flask.request.args or flask.request.args['status_heat'] == 'off')):
         props['status_ac'] = flask.request.args['status_ac']
-    if flask.request.args['status_ac'] == 'off':
+    if ('status_heat' in flask.request.args and
+        'status_ac' not in flask.request.args or flask.request.args['status_ac'] == 'off')):
         props['status_heat'] = flask.request.args['status_heat']
-    props['status_fan'] = flask.request.args['status_fan']
-    props['trigger_temp'] = int(flask.request.args['trigger_temp'])
+        
+    if 'status_fan' in flask.request.args:
+        props['status_fan'] = flask.request.args['status_fan']
+    if 'trigger_temp' in flask.request.args:
+        props['trigger_temp'] = int(flask.request.args['trigger_temp'])
 
     logging.warning('%s set fan:%s ac:%s heat:%s temp:%s' % (user, props['status_fan'], props['status_ac'],
                                                               props['status_heat'], props['trigger_temp']))
