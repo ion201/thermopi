@@ -4,6 +4,9 @@ Relevant specs:
 C (black) - 24 Vac neutral
 G (green) - Fan control. Connect to R
 Y (yellow) - Cooling control. Connect to RC
-O/B (orange) - Connecting to R makes something click outside. Not sure what this actually does.
-R (red) - 24 Vac power
-RC (red) - 24 Vac power, specfically for cooling switch
+W (white) - Heating control. Connect to RH
+O/B (orange) - 2nd stage cooling (unused here)
+R (red) - 24 V ac power
+RC (red) - 24 V ac power, specfically for cooling switch
+RH (red) - 24 V ac power, specifically for heating switch
+(All three power wires are noramally run in a series from one wire)
