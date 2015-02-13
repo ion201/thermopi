@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+﻿#!/usr/bin/python3
 
 import flask
 import os
@@ -24,40 +24,40 @@ app.secret_key = os.urandom(32)
 
 def periodicrun(props):
     global DEGREES
-    
+
     day_map = [('Sa', '5'), ('F', '4'), ('Th', '3'),
                ('W', '2'), ('T', '1'), ('M', '0'), ('S', '6')]
-    
+
     i = 0
     while True:
         time.sleep(1)
         i += 1
-        
+
         if i % 5 == 0:
             props['temp_inside'] = '%.1f' % IO.gettemp()
-            
+
         if i % 10 == 0:
             with open('status.pickle', 'wb') as f:
                 pickle.dump(props, f, pickle.HIGHEST_PROTOCOL)
-                
+
             if props['status_ac'] == 'on':
                 IO.setac(1)
             if props['status_ac'] == 'off':
                 IO.setac(0)
             if props['status_ac'] == 'auto':
                 IO.setac(0) if IO.gettemp() < props['trigger_temp'] else IO.setac(1)
-                
+
             if props['status_heat'] == 'on':
                 IO.setheat(1)
             if props['status_heat'] == 'off':
                 IO.setheat(0)
             if props['status_heat'] == 'auto':
                 IO.setheat(0) if IO.gettemp() > props['trigger_temp'] else IO.setheat(1)
-                
+
             if props['status_fan'] == 'on':
                 # 'auto' is managed by IO.setx to ensure it is always on when the ac or heat is.
                 IO.setfan(1)
-                
+
         if i % 31 == 0:
             t = time.localtime()
             year, month, day, hour, minute = t[:5]
@@ -67,7 +67,7 @@ def periodicrun(props):
                 weekdays = event[0]
                 for d in day_map:
                     weekdays = weekdays.replace(d[0], d[1])
-                    
+
                 if str(weekday) not in weekdays:
                     continue
                 t = event[1]  # Time format: 'hhmm'
@@ -99,7 +99,7 @@ def gensecret():
 def apigensecret():
     user = flask.request.args['user']
     api_user_salts[user] = gensecret()
-    
+
     return api_user_salts[user]
 
 
@@ -107,13 +107,13 @@ def validateuser():
     if 'current_user' not in flask.session or not flask.session['current_user']:
         return False
     return True
-    
-    
+
+
 def checkpassword(user, password_md5, secret_salt):
     """password_md5 should already be an md5 sum of the user's password,
     then md5'd again with the secret key before being sent over http"""
     global passwords
-    
+
     with open('passwords.txt', 'r') as f:
         passwords = dict(line.split(':') for line in f.read().split())
 
@@ -178,7 +178,7 @@ def setstate():
     if 'user' in flask.request.args:
         user = flask.request.args['user']
         password_md5 = flask.request.args['password_hash']
-        if (not user in api_user_salts or 
+        if (not user in api_user_salts or
             not checkpassword(user, password_md5, api_user_salts[user])):
 
             return '403'
@@ -194,7 +194,7 @@ def setstate():
     if ('status_heat' in flask.request.args and
         'status_ac' not in flask.request.args or flask.request.args['status_ac'] == 'off')):
         props['status_heat'] = flask.request.args['status_heat']
-        
+
     if 'status_fan' in flask.request.args:
         props['status_fan'] = flask.request.args['status_fan']
     if 'trigger_temp' in flask.request.args:
@@ -221,7 +221,7 @@ def newevent():
         temp = f['temp']
     else:
         temp = ''
-        
+
     t = f['time']
     while len(t) <= 4:
         t = '0' + t
@@ -229,7 +229,7 @@ def newevent():
     props['events'].append([days, t, f['device_select'], f['mode_select'], temp])
 
     logging.warning('%s created event %s' % (flask.session['current_user'], str(props['events'][-1])))
-    
+
     return flask.redirect('/')
 
 
@@ -240,9 +240,9 @@ def deleteevent():
         return flask.redirect('/')
 
     eventIndex = int(flask.request.args['index'])
-    
+
     logging.warning('%s deleted event %s' % (flask.session['current_user'], str(props['events'][eventIndex])))
-    
+
     props['events'].pop(eventIndex)
     return flask.redirect('/')
 
@@ -287,25 +287,25 @@ def logout():
 def requestuser():
     if flask.request.method == 'GET':
         return flask.redirect('/login')
-    
+
     username = flask.request.form['req_username']
     password = flask.request.form['req_password_1']
-    
+
     with open('user_requests.txt', 'a') as f_req:
         f_req.write('%s:%s\n' % (username, password))
-    
+
     return flask.render_template('login.html', error='Request sent', secret=flask.session['session_salt'])
 
 @app.route('/admin', methods=['GET'])
 def adminpanel():
     if 'current_user' in flask.session and flask.session['current_user'] != 'admin':
         return flask.redirect('/')
-        
+
     with open('user_requests.txt', 'r') as f_req:
         request_users = dict(line.split(':') for line in f_req.read().split())
     with open('passwords.txt', 'r') as f_users:
         all_users = dict(line.split(':') for line in f_users.read().split())
-        
+
     if flask.request.args:
         if flask.request.args['action'] == 'confirm':
             new_user = flask.request.args['user']
@@ -313,18 +313,18 @@ def adminpanel():
             request_users.pop(new_user)
         elif flask.request.args['action'] == 'deny':
             request_users.pop(flask.request.args['user'])
-            
+
         elif flask.request.args['action'] == 'delete':
             if flask.request.args['user'] != 'admin':
                 all_users.pop(flask.request.args['user'])
-            
+
         with open('user_requests.txt', 'w') as f_req:
             for user, passwd in request_users.items():
                 f_req.write('%s:%s\n' % (user, passwd))
         with open('passwords.txt', 'w') as f_users:
             for user, passwd in all_users.items():
                 f_users.write('%s:%s\n' % (user, passwd))
-    
+
     return flask.render_template('admin.html', requests=request_users.keys(), all_users=all_users)
 
 
@@ -334,10 +334,10 @@ def rootdir():
     validation = validateuser()
     if not validation:
         return flask.redirect('/login')
-    
+
     page = flask.render_template('root.html', **dict(props, **flask.session))
     return page
-    
+
 
 @app.route('/api', methods=['GET'])
 def api():
