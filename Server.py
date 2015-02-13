@@ -1,4 +1,4 @@
-﻿#!/usr/bin/python3
+#!/usr/bin/python3
 
 import flask
 import os
@@ -64,6 +64,8 @@ def periodicrun(props):
             weekday = t[6]
 
             for event in props['events']:
+                # Event format: ['weekday <SMTWThFSa>', 'time <HHMM>',
+                #                'ac|heat|fan', 'auto|on|off', 'temp <TT>', 'F|C']
                 weekdays = event[0]
                 for d in day_map:
                     weekdays = weekdays.replace(d[0], d[1])
@@ -74,6 +76,12 @@ def periodicrun(props):
                 if int(t[2:]) != hour or int(t[:2]) != minute:
                     continue
                 # Time for an event! Do something?
+                if (event[2] not in ('ac', 'heat', 'fan') or
+                    event[3] not in ('on', 'off', 'auto')):
+                    continue
+                props['status_%s' % event[2]] = event[3]
+                if event['trigger_temp'].isdecimal():
+                    props['trigger_temp'] = int(event['trigger_temp'])
 
         if i % 60 == 0:
             props['temp_outside'] = getoutsidetemp()
@@ -192,7 +200,7 @@ def setstate():
        ('status_heat' not in flask.request.args or flask.request.args['status_heat'] == 'off')):
         props['status_ac'] = flask.request.args['status_ac']
     if ('status_heat' in flask.request.args and
-        'status_ac' not in flask.request.args or flask.request.args['status_ac'] == 'off')):
+        ('status_ac' not in flask.request.args or flask.request.args['status_ac'] == 'off')):
         props['status_heat'] = flask.request.args['status_heat']
 
     if 'status_fan' in flask.request.args:
