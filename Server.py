@@ -20,6 +20,7 @@ app = flask.Flask(__name__)
 # Use this line to force cookies to expire
 # every time the application is restarted
 # app.secret_key = os.urandom(32)
+app.secret_key = md5(b'super secret key').hexdigest()
 
 
 def periodicrun(props):
@@ -354,4 +355,4 @@ def api():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8055, debug=True)
+    app.run(host='0.0.0.0', port=8056, debug=True)
