@@ -19,7 +19,7 @@ from IO import IO
 app = flask.Flask(__name__)
 # Use this line to force cookies to expire
 # every time the application is restarted
-app.secret_key = os.urandom(32)
+# app.secret_key = os.urandom(32)
 
 
 def periodicrun(props):
@@ -69,19 +69,18 @@ def periodicrun(props):
                 weekdays = event[0]
                 for d in day_map:
                     weekdays = weekdays.replace(d[0], d[1])
-
                 if str(weekday) not in weekdays:
                     continue
                 t = event[1]  # Time format: 'hhmm'
-                if int(t[2:]) != hour or int(t[:2]) != minute:
+                if int(t[:2]) != hour or int(t[2:]) != minute:
                     continue
                 # Time for an event! Do something?
                 if (event[2] not in ('ac', 'heat', 'fan') or
                     event[3] not in ('on', 'off', 'auto')):
                     continue
                 props['status_%s' % event[2]] = event[3]
-                if event['trigger_temp'].isdecimal():
-                    props['trigger_temp'] = int(event['trigger_temp'])
+                if event[4].isdecimal():
+                    props['trigger_temp'] = int(event[4])
 
         if i % 60 == 0:
             props['temp_outside'] = getoutsidetemp()
@@ -231,7 +230,7 @@ def newevent():
         temp = ''
 
     t = f['time']
-    while len(t) <= 4:
+    while len(t) < 4:
         t = '0' + t
 
     props['events'].append([days, t, f['device_select'], f['mode_select'], temp])
