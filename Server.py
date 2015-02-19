@@ -132,8 +132,6 @@ def checkpassword(user, password_md5, secret_salt):
 @app.before_first_request
 def onstart():
     # Use this function to initialize modules and global vars
-    os.chdir('/srv/thermopi')
-
     logging.basicConfig(filename='history.log', level=logging.WARNING,
                         format='%(asctime)s %(message)s')
 
@@ -342,7 +340,6 @@ def rootdir():
     validation = validateuser()
     if not validation:
         return flask.redirect('/login')
-    logging.warning(os.getpid())
     page = flask.render_template('root.html', **dict(props, **flask.session))
     return page
 
