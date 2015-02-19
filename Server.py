@@ -20,7 +20,7 @@ app = flask.Flask(__name__)
 # Use this line to force cookies to expire
 # every time the application is restarted
 # app.secret_key = os.urandom(32)
-app.secret_key = md5(b'super secret key').hexdigest()
+app.secret_key = ' bbace2c841d9a06f382d1e4f5a97dc3d'
 
 
 def periodicrun(props):
@@ -132,6 +132,8 @@ def checkpassword(user, password_md5, secret_salt):
 @app.before_first_request
 def onstart():
     # Use this function to initialize modules and global vars
+    os.chdir('/srv/thermopi')
+
     logging.basicConfig(filename='history.log', level=logging.WARNING,
                         format='%(asctime)s %(message)s')
 
@@ -175,9 +177,7 @@ def onstart():
     global api_user_salts
     api_user_salts = {}
 
-    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        # Run these functions only once; not when reloaded
-        threading.Thread(target=periodicrun, args=(props,)).start()
+    threading.Thread(target=periodicrun, args=(props,)).start()
 
 
 @app.route('/setstate', methods=['GET'])
@@ -264,7 +264,7 @@ def login():
         When a password is entered, we get the md5 hash then append the secret to this hash
         and then hash it again.
         Result: an attackter cannot use intercepted data to log in :)"""
-    if flask.request.method == 'GET':
+    if 'session_salt' not in flask.session or flask.request.method == 'GET':
         flask.session['session_salt'] = gensecret()
         return flask.render_template('login.html', secret=flask.session['session_salt'])
 
@@ -342,7 +342,7 @@ def rootdir():
     validation = validateuser()
     if not validation:
         return flask.redirect('/login')
-
+    logging.warning(os.getpid())
     page = flask.render_template('root.html', **dict(props, **flask.session))
     return page
 
@@ -355,4 +355,4 @@ def api():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8056, debug=True)
+    app.run(host='0.0.0.0', port=8056, debug=True, use_reloader=False)
