@@ -25,6 +25,9 @@
         return true;
     }
     </script>
+    <style type="text/css">
+        table td{min-width:100px}
+    </style>
 </head>
 
 <body>
@@ -33,10 +36,14 @@
 
 <form action="/login" method="POST" enctype="multipart/form-data" name="login_form"
     onsubmit="md5SaltFormValue(document.login_form.password)">
-    <label for="username">Name:</label>
-        <input type="text" id="username" name="username" /><br />
-    <label for="password">Password:</label>
-        <input type="password" id="password" name="password" /><br />
+    <table>
+    <tr><td><label for="username">Name:</label></td>
+        <td><input type="text" id="username" name="username" /></td>
+        </tr>
+    <tr><td><label for="password">Password:</label></td>
+        <td><input type="password" id="password" name="password" /></td>
+        </tr>
+    </table>
     <input type="submit" value="submit" />
 </form>
 
@@ -46,12 +53,17 @@
     onsubmit="return checkFormMatch(document.request_form.req_password_1, document.request_form.req_password_2);">
     <p>Request access</p>
     <p id="error_2" style="color:red"></p>
-    <label for="req_username">Name:</label>
-        <input type="text" id="req_username" name="req_username" value="{{ req_user_prefill }}" /><br />
-    <label for="req_password_1">Password:</label>
-        <input type="password" id="req_password_1" name="req_password_1" /><br />
-    <label for="req_password_2">Confirm password:</label>
-        <input type="password" id="req_password_2" name="req_password_2" /><br />
+    <table>
+    <tr><td><label for="req_username">Name:</label></td>
+        <td><input type="text" id="req_username" name="req_username" value="{{ req_user_prefill }}" />
+        </td></tr>
+    <tr><td><label for="req_password_1">Password:</label></td>
+        <td><input type="password" id="req_password_1" name="req_password_1" />
+        </td></tr>
+    <tr><td><label for="req_password_2">Confirm:</label></td>
+        <td><input type="password" id="req_password_2" name="req_password_2" />
+        </td></tr>
+    </table>
     <input type="submit" value="Send Request" />
 </form>
 
