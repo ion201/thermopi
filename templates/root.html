@@ -4,12 +4,13 @@
 <head>
     <title>ThermoPi Control Panel</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width" />
     <link rel="shortcut icon" href="static/icons/favicon.png" />
     <script type="text/javascript" src="{{ url_for('static', filename='functions.js') }}"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tablestyle.css') }}" />
 </head>
 
-<body style="width:480px">
+<body>
 
 <p>Currently logged in as: {{ current_user }}</p>
 <a href='/admin'>[Admin panel]</a>&nbsp;<a href="/logout">[Logout]</a>
@@ -19,7 +20,7 @@
 <p style="color:red">{{ error_message }}</p>
 <p style="color:green">{{ success_message }}</p>
 
-<div id="temps" style="margin:0 0">
+<div id="temps" style="margin:0 0; max-width:480px">
     <div id="temp_inside" style="float:left; margin:0; width:50%">
         <h4>Inside temperature</h4>
         <p>{{ temp_inside }} °{{ units }}</p>
@@ -29,50 +30,50 @@
         <p>{{ temp_outside }} °{{ units }}</p>
     </div>
 </div>
-<p>&nbsp;</p>
 
-
-<h4>Status/Manual Toggle</h4>
-<form action='/setstate' method="GET" enctype="multipart/form-data" name="set_state">
-    <label for="trigger_temp">Auto trigger temp:</label>
-        <input id="trigger_temp" value="{{ trigger_temp  }}" name="trigger_temp" style="width: 18px" maxlength="2" />
-    <img src="static/icons/minus.png" style="cursor: pointer" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value-1" />
-    <img src="static/icons/plus.png" style="cursor: pointer" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value+1" />&nbsp;
-    <br />
-    {% set options = ['auto', 'on'] %}
-    <label for="status_fan">Fan:</label>
-    <select id="status_fan" name="status_fan">
-    {% for option in options %}
-        {% if status_fan == option %}
-            <option selected="selected">{{ option }}</option>
-        {% else %}
-            <option>{{ option }}</option>
-        {% endif %}
-    {% endfor %}
-    </select><br />
-    {% set options = ['auto', 'on', 'off'] %}
-    <label for="status_ac">AC:</label>
-    <select id="status_ac" name="status_ac">
-    {% for option in options %}
-        {% if status_ac == option %}
-            <option selected="selected">{{ option }}</option>
-        {% else %}
-            <option>{{ option }}</option>
-        {% endif %}
-    {% endfor %}
-    </select><br />
-    <label for="status_heat">Heat:</label>
-    <select id="status_heat" name="status_heat">
-    {% for option in options %}
-        {% if status_heat == option %}
-            <option selected="selected">{{ option }}</option>
-        {% else %}
-            <option>{{ option }}</option>
-        {% endif %}
-    {% endfor %}
-    </select><br />
-    <input type="submit" value="save" />
-</form>
+<div id="status" style="clear: left">
+    <h4>Status/Manual Toggle</h4>
+    <form action='/setstate' method="GET" enctype="multipart/form-data" name="set_state">
+        <label for="trigger_temp">Auto trigger temp:</label>
+            <input id="trigger_temp" value="{{ trigger_temp  }}" name="trigger_temp" style="width: 18px" maxlength="2" />
+        <img src="static/icons/minus.png" style="cursor: pointer" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value-1" />
+        <img src="static/icons/plus.png" style="cursor: pointer" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value+1" />&nbsp;
+        <br />
+        {% set options = ['auto', 'on'] %}
+        <label for="status_fan">Fan:</label>
+        <select id="status_fan" name="status_fan">
+        {% for option in options %}
+            {% if status_fan == option %}
+                <option selected="selected">{{ option }}</option>
+            {% else %}
+                <option>{{ option }}</option>
+            {% endif %}
+        {% endfor %}
+        </select><br />
+        {% set options = ['auto', 'on', 'off'] %}
+        <label for="status_ac">AC:</label>
+        <select id="status_ac" name="status_ac">
+        {% for option in options %}
+            {% if status_ac == option %}
+                <option selected="selected">{{ option }}</option>
+            {% else %}
+                <option>{{ option }}</option>
+            {% endif %}
+        {% endfor %}
+        </select><br />
+        <label for="status_heat">Heat:</label>
+        <select id="status_heat" name="status_heat">
+        {% for option in options %}
+            {% if status_heat == option %}
+                <option selected="selected">{{ option }}</option>
+            {% else %}
+                <option>{{ option }}</option>
+            {% endif %}
+        {% endfor %}
+        </select><br />
+        <input type="submit" value="save" />
+    </form>
+</div>
 
 <br /><br />
 
