@@ -1,0 +1,9 @@
+[Unit]
+Description=GPIO management for thermopi
+
+[Service]
+Type=simple
+ExecStart=/srv/thermopi/IOService.py
+
+[Install]
+WantedBy=multi-user.target

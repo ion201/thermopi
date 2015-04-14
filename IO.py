@@ -1,29 +1,33 @@
-import RPi.GPIO as GPIO
+# Write commands for IOService.py to /tmp/gpiocomm
+# All commands take the form--
+# <channel>:<state 0|1>
+# or
+# <channel>:clean
+# <channel>:setup
+
 
 class IO:
     def init(config):
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setwarnings(False)
-
         IO.ch_fan = int(config['gpio_channel_fan'])
-        GPIO.cleanup(IO.ch_fan)
-        GPIO.setup(IO.ch_fan, GPIO.OUT, initial=0)
         try:
             IO.ch_ac = int(config['gpio_channel_ac'])
-            GPIO.cleanup(IO.ch_ac)
-            GPIO.setup(IO.ch_ac, GPIO.OUT, initial=0)
         except ValueError:
             IO.ch_ac = None
         try:
             IO.ch_heat = int(config['gpio_channel_heat'])
-            GPIO.cleanup(IO.ch_heat)
-            GPIO.setup(IO.ch_heat, GPIO.OUT, initial=0)
         except ValueError:
             IO.ch_heat = None
 
         IO.units = config['units']  # 'F' or 'C'
 
         IO.therm_device_id = config['therm_device_id']
+        
+        IO.out_file = '/tmp/gpiocomm'
+        
+        with open(IO.out_file, 'a') as comm_file:
+            comm_file.write('%s:clean' % IO.ch_fan)
+            comm_file.write('%s:clean' % IO.ch_ac)
+            comm_file.write('%s:clean' % IO.ch_heat)
 
 
     def gettemp():
@@ -37,6 +41,8 @@ class IO:
 
         if IO.units == 'F':  # Device reads in Celsius
             temp = temp * 1.8 + 32
+        if IO.units == 'K':
+            temp += 273
         round(temp, 1)
 
         return temp
@@ -44,20 +50,25 @@ class IO:
 
     def setfan(state):
         """True -> on; False -> off; (or anything which will eval to t/f)"""
-        GPIO.output(IO.ch_fan, state)
+        with open(IO.out_file, 'a') as comm_file:
+            comm_file.write('%s:%s' % (IO.ch_fan, int(bool(state))))
 
 
     def setac(state):
         if not IO.ch_ac:
             return
-
+        
+        with open(IO.out_file, 'a') as comm_file:
+            comm_file.write('%s:%s' % (IO.ch_ac, int(bool(state))))
+        
         IO.setfan(state)
-        GPIO.output(IO.ch_ac, state)
 
 
     def setheat(state):
         if not IO.ch_heat:
             return
-
+        
+        with open(IO.out_file, 'a') as comm_file:
+            comm_file.write('%s:%s' % (IO.ch_heat, int(bool(state))))
+        
         IO.setfan(state)
-        GPIO.output(IO.ch_heat, state)
