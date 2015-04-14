@@ -23,9 +23,18 @@ app = flask.Flask(__name__)
 app.secret_key = ' bbace2c841d9a06f382d1e4f5a97dc3d'
 
 
-def periodicrun(props):
-    global DEGREES
+def storeobject(obj_name, obj):
+    with open('pickledb/%s.pickle' % obj_name, 'wb') as file:
+        pickle.dump(obj, file, pickle.HIGHEST_PROTOCOL)
 
+
+def loadobject(obj_name):
+    with open('pickledb/%s.pickle' % obj_name, 'rb') as file:
+        obj = pickle.load(file)
+    return obj
+
+
+def periodicrun():
     day_map = [('Sa', '5'), ('F', '4'), ('Th', '3'),
                ('W', '2'), ('T', '1'), ('M', '0'), ('S', '6')]
 
@@ -34,12 +43,16 @@ def periodicrun(props):
         time.sleep(1)
         i += 1
 
+        props = loadobject('props')
+        if i % 60 == 0:
+            props['temp_outside'] = getoutsidetemp()
+            storeobject('props', props)
+        
         if i % 5 == 0:
             props['temp_inside'] = '%.1f' % IO.gettemp()
 
         if i % 10 == 0:
-            with open('status.pickle', 'wb') as f:
-                pickle.dump(props, f, pickle.HIGHEST_PROTOCOL)
+            storeobject('props', props);
 
             if props['status_ac'] == 'on':
                 IO.setac(1)
@@ -82,15 +95,15 @@ def periodicrun(props):
                 props['status_%s' % event[2]] = event[3]
                 if event[4].isdecimal():
                     props['trigger_temp'] = int(event[4])
-
-        if i % 60 == 0:
-            props['temp_outside'] = getoutsidetemp()
+                storeobject('props', props)
 
 
 def getoutsidetemp():
+    props = loadobject('props')
+
     url = 'http://api.worldweatheronline.com/free/v2/weather.ashx'
     url += '?key=%s&q=%s&num_of_days=0&format=json' % (
-          weather_api_key, location)
+          loadobject('weather_api_key'), loadobject('location'))
     try:
         data = json.loads(request.urlopen(url).readall().decode('utf-8'))
         return data['data']['current_condition'][0]['temp_%s' % props['units']]
@@ -120,8 +133,7 @@ def validateuser():
 def checkpassword(user, password_md5, secret_salt):
     """password_md5 should already be an md5 sum of the user's password,
     then md5'd again with the secret key before being sent over http"""
-    global passwords
-
+        
     with open('passwords.txt', 'r') as f:
         passwords = dict(line.split(':') for line in f.read().split())
 
@@ -135,16 +147,13 @@ def onstart():
     logging.basicConfig(filename='history.log', level=logging.WARNING,
                         format='%(asctime)s %(message)s')
 
-    global DEGREES
-    DEGREES = '°'
-
-    global props, days_short
     props = {}
     days_short = {'sunday': 'S', 'monday': 'M', 'tuesday': 'T', 'wednesday': 'W',
                   'thursday': 'Th', 'friday': 'F', 'saturday': 'Sa'}
+    storeobject('days_short', days_short)
+    
     try:
-        with open('status.pickle', 'rb') as f:
-            props = pickle.load(f)
+        props = loadobject('props')
     except FileNotFoundError:
         props['status_fan'] = 'auto'
         props['status_ac'] = 'off'
@@ -160,10 +169,10 @@ def onstart():
 
     IO.init(config)
 
-    global weather_api_key, location
-    weather_api_key = config['weather_api_key']
-    location = config['location']
     props['units'] = config['units']
+    
+    storeobject('weather_api_key', config['weather_api_key'])
+    storeobject('location', config['location'])
 
     props['temp_inside'] = '%.1f' % IO.gettemp()
     props['temp_outside'] = getoutsidetemp()
@@ -172,15 +181,16 @@ def onstart():
         with open('passwords.txt', 'w') as f:
             f.write('admin:%s\n' % md5(b'admin').hexdigest())
 
-    global api_user_salts
-    api_user_salts = {}
+    storeobject('api_user_salts', {})
+    
+    storeobject('props', props)
 
-    threading.Thread(target=periodicrun, args=(props,)).start()
+    threading.Thread(target=periodicrun).start()
 
 
 @app.route('/setstate', methods=['GET'])
 def setstate():
-    global api_user_salts
+    api_user_salts = loadobject('api_user_salts')
     if 'user' in flask.request.args:
         user = flask.request.args['user']
         password_md5 = flask.request.args['password_hash']
@@ -193,6 +203,10 @@ def setstate():
         api_user_salts[user] = gensecret()
     else:
         user = flask.session['current_user']
+        
+    storeobject('api_user_salts', api_user_salts)
+    
+    props = loadobject('props')
 
     if ('status_ac' in flask.request.args and
        ('status_heat' not in flask.request.args or flask.request.args['status_heat'] == 'off')):
@@ -209,6 +223,8 @@ def setstate():
     logging.warning('%s set fan:%s ac:%s heat:%s temp:%s' % (user, props['status_fan'], props['status_ac'],
                                                               props['status_heat'], props['trigger_temp']))
 
+    storeobject('props', props)
+
     return flask.redirect('/')
 
 
@@ -217,6 +233,10 @@ def newevent():
     validation = validateuser()
     if not validation:
         return flask.redirect('/')
+        
+    #with open('pickledb/days_short.pickle', 'rb') as days_short_file:
+    #    days_short = pickle.load(days_short_file)
+    days_short = loadobject('days_short')
 
     f = flask.request.args.copy()
     days = ''
@@ -231,10 +251,14 @@ def newevent():
     t = f['time']
     while len(t) < 4:
         t = '0' + t
+    
+    props = loadobject('props')
 
     props['events'].append([days, t, f['device_select'], f['mode_select'], temp])
 
     logging.warning('%s created event %s' % (flask.session['current_user'], str(props['events'][-1])))
+    
+    storeobject('props', props)
 
     return flask.redirect('/')
 
@@ -246,10 +270,15 @@ def deleteevent():
         return flask.redirect('/')
 
     eventIndex = int(flask.request.args['index'])
+    
+    props = loadobject('props')
 
     logging.warning('%s deleted event %s' % (flask.session['current_user'], str(props['events'][eventIndex])))
 
     props['events'].pop(eventIndex)
+    
+    storeobject('props', props)
+    
     return flask.redirect('/')
 
 
@@ -262,6 +291,7 @@ def login():
         When a password is entered, we get the md5 hash then append the secret to this hash
         and then hash it again.
         Result: an attackter cannot use intercepted data to log in :)"""
+
     if 'session_salt' not in flask.session or flask.request.method == 'GET':
         flask.session['session_salt'] = gensecret()
         return flask.render_template('login.html', secret=flask.session['session_salt'])
@@ -340,6 +370,9 @@ def rootdir():
     validation = validateuser()
     if not validation:
         return flask.redirect('/login')
+    
+    props = loadobject('props')
+    
     page = flask.render_template('root.html', **dict(props, **flask.session))
     return page
 
@@ -348,7 +381,7 @@ def rootdir():
 def api():
     """Get information only. json formatted"""
 
-    return flask.render_template('api.html', **props)
+    return flask.render_template('api.html', **loadobject('props'))
 
 
 if __name__ == '__main__':
