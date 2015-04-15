@@ -24,10 +24,19 @@ class IO:
         
         IO.out_file = '/tmp/gpiocomm'
         
+        with open(IO.out_file, 'w') as comm_file:
+            comm_file.write('')
+        
         with open(IO.out_file, 'a') as comm_file:
-            comm_file.write('%s:clean' % IO.ch_fan)
-            comm_file.write('%s:clean' % IO.ch_ac)
-            comm_file.write('%s:clean' % IO.ch_heat)
+            if IO.ch_fan:
+                comm_file.write('%s:clean\n' % IO.ch_fan)
+                comm_file.write('%s:setup\n' % IO.ch_fan)
+            if IO.ch_ac:
+                comm_file.write('%s:clean\n' % IO.ch_ac)
+                comm_file.write('%s:setup\n' % IO.ch_ac)
+            if IO.ch_heat:
+                comm_file.write('%s:clean\n' % IO.ch_heat)
+                comm_file.write('%s:setup\n' % IO.ch_heat)
 
 
     def gettemp():
@@ -51,7 +60,7 @@ class IO:
     def setfan(state):
         """True -> on; False -> off; (or anything which will eval to t/f)"""
         with open(IO.out_file, 'a') as comm_file:
-            comm_file.write('%s:%s' % (IO.ch_fan, int(bool(state))))
+            comm_file.write('%s:%s\n' % (IO.ch_fan, int(bool(state))))
 
 
     def setac(state):
@@ -59,7 +68,7 @@ class IO:
             return
         
         with open(IO.out_file, 'a') as comm_file:
-            comm_file.write('%s:%s' % (IO.ch_ac, int(bool(state))))
+            comm_file.write('%s:%s\n' % (IO.ch_ac, int(bool(state))))
         
         IO.setfan(state)
 
@@ -69,6 +78,6 @@ class IO:
             return
         
         with open(IO.out_file, 'a') as comm_file:
-            comm_file.write('%s:%s' % (IO.ch_heat, int(bool(state))))
+            comm_file.write('%s:%s\n' % (IO.ch_heat, int(bool(state))))
         
         IO.setfan(state)

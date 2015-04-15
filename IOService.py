@@ -1,10 +1,13 @@
+#!/usr/bin/python3
+
 import RPi.GPIO as GPIO
 import time
+import os
 
 
 def setchannel(channel, state):
     """True -> on; False -> off; (or anything which will eval to t/f)"""
-    GPIO.output(IO.ch_fan, state)
+    GPIO.output(channel, state)
 
 
 def setupchannel(channel):
@@ -20,20 +23,24 @@ def processcommands():
     
     if not os.path.exists(comm_file):
         with open(comm_file, 'w') as file:
-            file.write()
+            file.write('')
     
     with open(comm_file, 'r') as file:
         commands = file.read().split()
     
     for command in commands:
         channel, directive = command.split(':')
-        
+        channel = int(channel)
+
         if directive == 'clean':
             cleanchannel(channel)
         elif directive == 'setup':
             setupchannel(channel)
         else:
             setchannel(channel, bool(int(directive)))
+    
+    with open(comm_file, 'w') as file:
+        file.write('')
 
 
 def init():
@@ -41,7 +48,7 @@ def init():
     GPIO.setwarnings(False)
 
     while True:
-        time.sleep(5)
+        time.sleep(1)
         processcommands()
 
 

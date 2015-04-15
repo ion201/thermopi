@@ -105,7 +105,7 @@ def getoutsidetemp():
     url += '?key=%s&q=%s&num_of_days=0&format=json' % (
           loadobject('weather_api_key'), loadobject('location'))
     try:
-        data = json.loads(request.urlopen(url).readall().decode('utf-8'))
+        data = json.loads(request.urlopen(url, timeout=3).readall().decode('utf-8'))
         return data['data']['current_condition'][0]['temp_%s' % props['units']]
     except (HTTPError, URLError) as e:
         logging.warning(e.args[0])
@@ -151,7 +151,7 @@ def onstart():
     days_short = {'sunday': 'S', 'monday': 'M', 'tuesday': 'T', 'wednesday': 'W',
                   'thursday': 'Th', 'friday': 'F', 'saturday': 'Sa'}
     storeobject('days_short', days_short)
-    
+
     try:
         props = loadobject('props')
     except FileNotFoundError:
@@ -170,19 +170,20 @@ def onstart():
     IO.init(config)
 
     props['units'] = config['units']
-    
+
     storeobject('weather_api_key', config['weather_api_key'])
     storeobject('location', config['location'])
 
     props['temp_inside'] = '%.1f' % IO.gettemp()
     props['temp_outside'] = getoutsidetemp()
+    #props['temp_outside'] = '50'
 
     if not os.path.exists('passwords.txt'):
         with open('passwords.txt', 'w') as f:
             f.write('admin:%s\n' % md5(b'admin').hexdigest())
 
     storeobject('api_user_salts', {})
-    
+
     storeobject('props', props)
 
     threading.Thread(target=periodicrun).start()
