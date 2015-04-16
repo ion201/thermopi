@@ -1,10 +1,12 @@
+#!/usr/bin/python3
+
 # Write commands for IOService.py to /tmp/gpiocomm
 # All commands take the form--
 # <channel>:<state 0|1>
 # or
 # <channel>:clean
 # <channel>:setup
-
+#        -1:exit  -- only used by IOServiceStop.py
 
 class IO:
     def init(config):

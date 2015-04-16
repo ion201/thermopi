@@ -21,12 +21,15 @@ def cleanchannel(channel):
 def processcommands():
     comm_file = '/tmp/gpiocomm'
     
-    if not os.path.exists(comm_file):
-        with open(comm_file, 'w') as file:
-            file.write('')
+    with open(comm_file, 'w') as file:
+        file.write('')
+    
+    os.chmod(comm_file, 0o666)  #Everyone can write to this file.
     
     with open(comm_file, 'r') as file:
         commands = file.read().split()
+    
+    exit_now = False
     
     for command in commands:
         channel, directive = command.split(':')
@@ -36,20 +39,25 @@ def processcommands():
             cleanchannel(channel)
         elif directive == 'setup':
             setupchannel(channel)
+        elif directive == 'exit':
+            exit_now = True
         else:
             setchannel(channel, bool(int(directive)))
     
     with open(comm_file, 'w') as file:
         file.write('')
 
+    return exit_now
+
 
 def init():
     GPIO.setmode(GPIO.BOARD)
     GPIO.setwarnings(False)
 
-    while True:
+    exit_now = False
+    while not exit_now:
         time.sleep(1)
-        processcommands()
+        exit_now = processcommands()
 
 
 if __name__ == '__main__':
