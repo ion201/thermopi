@@ -8,6 +8,15 @@
 # <channel>:setup
 #        -1:exit  -- only used by IOServiceStop.py
 
+
+def gettemp_w1(device_id)
+    path = '/sys/bus/w1/devices/%s/w1_slave' % device_id
+    with open(path, 'r') as temperature_file:
+        temp = float(temperature_file.read().split('=')[-1]) / 1000
+        
+    return temp
+
+
 class IO:
     def init(config):
         IO.ch_fan = int(config['gpio_channel_fan'])
@@ -22,6 +31,7 @@ class IO:
 
         IO.units = config['units']  # 'F' or 'C'
 
+        IO.therm_device_driver = config['therm_device_driver']
         IO.therm_device_id = config['therm_device_id']
         
         IO.out_file = '/tmp/gpiocomm'
@@ -43,24 +53,26 @@ class IO:
 
     def gettemp():
         # /sys/bus/w1/devices/28-000006153d8f/w1_slave, t=[temp] on second line
-        if not IO.therm_device_id:
+        if not IO.therm_device_id or not IO.therm_device_driver:
             return 0
 
-        path = '/sys/bus/w1/devices/%s/w1_slave' % IO.therm_device_id
-        with open(path, 'r') as f:
-            temp = float(f.read().split('=')[-1]) / 1000
-
-        if IO.units == 'F':  # Device reads in Celsius
+        if IO.therm_device_driver == 'w1':
+            temp = gettemp_w1(IO.therm_device_id)
+        
+        if IO.units == 'F':  # All functions should return temp in Celsius
             temp = temp * 1.8 + 32
         if IO.units == 'K':
             temp += 273
-        round(temp, 1)
+        temp = round(temp, 1)
 
         return temp
 
 
     def setfan(state):
         """True -> on; False -> off; (or anything which will eval to t/f)"""
+        if not IO.ch_fan:
+            return
+        
         with open(IO.out_file, 'a') as comm_file:
             comm_file.write('%s:%s\n' % (IO.ch_fan, int(bool(state))))
 
