@@ -252,6 +252,11 @@ def newevent():
     else:
         temp = ''
 
+    if f['device_select'] == 'fan' and f['mode_select'] == 'off':
+        # This configuration is not possible without
+        # manually crafting the GET request...
+        return flask.redirect('/')
+
     t = f['time']
     while len(t) < 4:
         t = '0' + t
@@ -259,6 +264,8 @@ def newevent():
     props = loadobject('props')
 
     props['events'].append([days, t, f['device_select'], f['mode_select'], temp])
+    # Sort by execution time
+    props['events'].sort(key=lambda x: x[1])
 
     logging.warning('%s created event %s' % (flask.session['current_user'], str(props['events'][-1])))
     

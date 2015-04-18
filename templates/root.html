@@ -121,9 +121,13 @@ onsubmit="return (checkFormValue(document.new_event.time) && checkFormValue(docu
     <label for="time">Time (Military time: 0000-2400):</label>
     <input type="text" style="width:40px;" name="time" id="time" maxlength="4" />
     <br />
-    <input type="radio" id="fan" name="device_select" value="fan" checked /><label for="fan">Fan</label>
-    <input type="radio" id="ac" name="device_select" value="ac" /><label for="ac">AC</label>
-    <input type="radio" id="heat" name="device_select" value="heat" /><label for="heat">Heat</label>
+    <input type="radio" id="fan" name="device_select" value="fan"
+        onclick="var elem = document.getElementById('off'); elem.disabled=true; elem.checked=false" />
+        <label for="fan">Fan</label>
+    <input type="radio" id="ac" name="device_select" value="ac" checked=true
+        onclick="document.getElementById('off').disabled = false" /><label for="ac">AC</label>
+    <input type="radio" id="heat" name="device_select" value="heat"
+        onclick="document.getElementById('off').disabled = false" /><label for="heat">Heat</label>
     <br />
     <input type="radio" id="off" name="mode_select" value="off" required="required" /><label for="off">Off</label>
     <input type="radio" id="on" name="mode_select" value="on" /><label for="on">On</label>
