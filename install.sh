@@ -31,7 +31,7 @@ else
     echo 'Package manager not supported! Continue [y]/n?'
     while read a;
     do
-        if [ $a == 'n' || $a == 'N' ]
+        if [[ $a == 'n' || $a == 'N' ]]
         then
             echo 'Canceling installation...'
             exit
