@@ -9,7 +9,7 @@
 #        -1:exit  -- only used by IOServiceStop.py
 
 
-def gettemp_w1(device_id)
+def gettemp_w1(device_id):
     path = '/sys/bus/w1/devices/%s/w1_slave' % device_id
     with open(path, 'r') as temperature_file:
         temp = float(temperature_file.read().split('=')[-1]) / 1000

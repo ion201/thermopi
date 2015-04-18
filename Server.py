@@ -15,13 +15,12 @@ import shutil
 
 from IO import IO
 
-
 app = flask.Flask(__name__)
 # Use this line to force cookies to expire
 # every time the application is restarted
 # app.secret_key = os.urandom(32)
 app.secret_key = ' bbace2c841d9a06f382d1e4f5a97dc3d'
-
+#app.debug = True
 
 def storeobject(obj_name, obj):
     with open('pickledb/%s.pickle' % obj_name, 'wb') as file:
@@ -47,7 +46,7 @@ def periodicrun():
         if i % 60 == 0:
             props['temp_outside'] = getoutsidetemp()
             storeobject('props', props)
-        
+
         if i % 5 == 0:
             props['temp_inside'] = '%.1f' % IO.gettemp()
 
@@ -133,7 +132,7 @@ def validateuser():
 def checkpassword(user, password_md5, secret_salt):
     """password_md5 should already be an md5 sum of the user's password,
     then md5'd again with the secret key before being sent over http"""
-        
+
     with open('passwords.txt', 'r') as f:
         passwords = dict(line.split(':') for line in f.read().split())
 
@@ -144,12 +143,16 @@ def checkpassword(user, password_md5, secret_salt):
 @app.before_first_request
 def onstart():
     # Use this function to initialize modules and global vars
+
+    os.chdir('/srv/thermopi/')
+
     logging.basicConfig(filename='history.log', level=logging.WARNING,
                         format='%(asctime)s %(message)s')
 
     props = {}
     days_short = {'sunday': 'S', 'monday': 'M', 'tuesday': 'T', 'wednesday': 'W',
                   'thursday': 'Th', 'friday': 'F', 'saturday': 'Sa'}
+    logging.critical(os.getcwd())
     storeobject('days_short', days_short)
 
     try:
