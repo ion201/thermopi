@@ -338,10 +338,21 @@ def requestuser():
     username = flask.request.form['req_username']
     password = flask.request.form['req_password_1']
 
-    with open('user_requests.txt', 'a') as f_req:
-        f_req.write('%s:%s\n' % (username, password))
+    with open('passwords.txt', 'r') as f:
+        current_users = [line.split(':')[0] for line in f.read().split()]
 
-    return flask.render_template('login.html', error='Request sent', secret=flask.session['session_salt'])
+    if username in current_users:
+        message = 'That user already exists!'
+
+    elif any(ord(c) > 255 for c in username):
+        message = 'Usernames may not contain unicode characters!'
+
+    else:
+        with open('user_requests.txt', 'a') as f_req:
+            f_req.write('%s:%s\n' % (username, password))
+        message = 'Request sent!'
+
+    return flask.render_template('login.html', error=message, secret=flask.session['session_salt'])
 
 @app.route('/admin', methods=['GET'])
 def adminpanel():

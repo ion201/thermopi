@@ -18,7 +18,10 @@
     function checkFormMatch(form1, form2)
     {
         if (md5(form1.value) != md5(form2.value)){
-            document.getElementById("error_2").innerHTML = "Error: Password forms don't match!";
+            document.getElementById("error_2").innerHTML = "Error: Passwords don't match!";
+            form1.value = '';
+            form2.value = '';
+            form1.focus();
             return false;
         }
         md5FormValue(form1);
