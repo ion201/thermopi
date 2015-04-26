@@ -9,3 +9,4 @@ settings.conf
 passwords.txt
 user_requests.txt
 history.log
+*.tmp

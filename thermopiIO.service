@@ -4,8 +4,6 @@ Description=GPIO management for thermopi
 [Service]
 Type=simple
 ExecStart=/srv/thermopi/IOService.py
-RestartSec=3
-ExecStop=/srv/thermopi/IOServiceStop.py
 
 [Install]
 WantedBy=multi-user.target

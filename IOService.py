@@ -19,18 +19,13 @@ def cleanchannel(channel):
 
 
 def processcommands():
-    comm_file = '/tmp/gpiocomm'
-    
-    with open(comm_file, 'w') as file:
-        file.write('')
-    
-    os.chmod(comm_file, 0o666)  #Everyone can write to this file.
-    
+    comm_file = '/srv/thermopi/gpiocomm.tmp'
+
     with open(comm_file, 'r') as file:
         commands = file.read().split()
-    
+
     exit_now = False
-    
+
     for command in commands:
         channel, directive = command.split(':')
         channel = int(channel)
@@ -42,7 +37,12 @@ def processcommands():
         elif directive == 'exit':
             exit_now = True
         else:
-            setchannel(channel, bool(int(directive)))
+            try:
+                setchannel(channel, bool(int(directive)))
+            except RuntimeError:
+                # The channel probably hasn't been set up yet. Let's do that.
+                cleanchannel(channel)
+                setupchannel(channel)
     
     with open(comm_file, 'w') as file:
         file.write('')
@@ -53,6 +53,10 @@ def processcommands():
 def init():
     GPIO.setmode(GPIO.BOARD)
     GPIO.setwarnings(False)
+
+    comm_file = '/srv/thermopi/gpiocomm.tmp'
+
+    os.chmod(comm_file, 0o666)  #Everyone can write to this file.
 
     exit_now = False
     while not exit_now:

@@ -15,12 +15,15 @@ import shutil
 
 from IO import IO
 
+from logging.handlers import RotatingFileHandler
+
 app = flask.Flask(__name__)
 # Use this line to force cookies to expire
 # every time the application is restarted
 # app.secret_key = os.urandom(32)
 app.secret_key = ' bbace2c841d9a06f382d1e4f5a97dc3d'
 #app.debug = True
+
 
 def storeobject(obj_name, obj):
     with open('pickledb/%s.pickle' % obj_name, 'wb') as file:
@@ -31,6 +34,20 @@ def loadobject(obj_name):
     with open('pickledb/%s.pickle' % obj_name, 'rb') as file:
         obj = pickle.load(file)
     return obj
+
+
+def getoutsidetemp():
+    props = loadobject('props')
+
+    url = 'http://api.worldweatheronline.com/free/v2/weather.ashx'
+    url += '?key=%s&q=%s&num_of_days=0&format=json' % (
+          loadobject('weather_api_key'), loadobject('location'))
+    try:
+        data = json.loads(request.urlopen(url, timeout=3).readall().decode('utf-8'))
+        return data['data']['current_condition'][0]['temp_%s' % props['units']]
+    except (HTTPError, URLError) as e:
+        logging.warning(e.args[0])
+        return "err"
 
 
 def periodicrun():
@@ -68,7 +85,7 @@ def periodicrun():
                 IO.setheat(0) if IO.gettemp() > props['trigger_temp'] else IO.setheat(1)
 
             if props['status_fan'] == 'on':
-                # 'auto' is managed by IO.setx to ensure it is always on when the ac or heat is.
+                # 'auto' is managed by IO.set__ to ensure it is always on when the ac or heat is.
                 IO.setfan(1)
 
         if i % 31 == 0:
@@ -95,20 +112,6 @@ def periodicrun():
                 if event[4].isdecimal():
                     props['trigger_temp'] = int(event[4])
                 storeobject('props', props)
-
-
-def getoutsidetemp():
-    props = loadobject('props')
-
-    url = 'http://api.worldweatheronline.com/free/v2/weather.ashx'
-    url += '?key=%s&q=%s&num_of_days=0&format=json' % (
-          loadobject('weather_api_key'), loadobject('location'))
-    try:
-        data = json.loads(request.urlopen(url, timeout=3).readall().decode('utf-8'))
-        return data['data']['current_condition'][0]['temp_%s' % props['units']]
-    except (HTTPError, URLError) as e:
-        logging.warning(e.args[0])
-        return "err"
 
 
 def gensecret():
@@ -140,19 +143,20 @@ def checkpassword(user, password_md5, secret_salt):
         return True
     return False
 
+
 @app.before_first_request
 def onstart():
     # Use this function to initialize modules and global vars
 
     os.chdir('/srv/thermopi/')
 
-    logging.basicConfig(filename='history.log', level=logging.WARNING,
-                        format='%(asctime)s %(message)s')
+    logging.basicConfig(filename='history.log', level=logging.DEBUG,
+                       format='%(asctime)s %(message)s')
 
     props = {}
     days_short = {'sunday': 'S', 'monday': 'M', 'tuesday': 'T', 'wednesday': 'W',
                   'thursday': 'Th', 'friday': 'F', 'saturday': 'Sa'}
-    logging.critical(os.getcwd())
+
     storeobject('days_short', days_short)
 
     try:
@@ -177,9 +181,10 @@ def onstart():
     storeobject('weather_api_key', config['weather_api_key'])
     storeobject('location', config['location'])
 
+    storeobject('props', props)
+
     props['temp_inside'] = '%.1f' % IO.gettemp()
     props['temp_outside'] = getoutsidetemp()
-    #props['temp_outside'] = '50'
 
     if not os.path.exists('passwords.txt'):
         with open('passwords.txt', 'w') as f:
@@ -189,8 +194,9 @@ def onstart():
 
     storeobject('props', props)
 
-    threading.Thread(target=periodicrun).start()
-
+    t = threading.Thread(target=periodicrun, daemon=True)
+    t.start()
+    
 
 @app.route('/setstate', methods=['GET'])
 def setstate():

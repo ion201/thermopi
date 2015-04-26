@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Write commands for IOService.py to /tmp/gpiocomm
+# Write commands for IOService.py to gpiocomm.tmp
 # All commands take the form--
 # <channel>:<state 0|1>
 # or
@@ -8,6 +8,8 @@
 # <channel>:setup
 #        -1:exit  -- only used by IOServiceStop.py
 
+import logging
+import os
 
 def gettemp_w1(device_id):
     path = '/sys/bus/w1/devices/%s/w1_slave' % device_id
@@ -34,7 +36,7 @@ class IO:
         IO.therm_device_driver = config['therm_device_driver']
         IO.therm_device_id = config['therm_device_id']
         
-        IO.out_file = '/tmp/gpiocomm'
+        IO.out_file = '/srv/thermopi/gpiocomm.tmp'
         
         with open(IO.out_file, 'w') as comm_file:
             comm_file.write('')
@@ -72,10 +74,9 @@ class IO:
         """True -> on; False -> off; (or anything which will eval to t/f)"""
         if not IO.ch_fan:
             return
-        
+
         with open(IO.out_file, 'a') as comm_file:
             comm_file.write('%s:%s\n' % (IO.ch_fan, int(bool(state))))
-
 
     def setac(state):
         if not IO.ch_ac:
