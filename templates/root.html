@@ -36,41 +36,48 @@
     <form action='/setstate' method="GET" enctype="multipart/form-data" name="set_state">
         <label for="trigger_temp">Auto trigger temp:</label>
             <input id="trigger_temp" value="{{ trigger_temp  }}" name="trigger_temp" style="width: 18px" maxlength="2" />
-        <img src="static/icons/minus.png" style="cursor: pointer" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value-1" />
-        <img src="static/icons/plus.png" style="cursor: pointer" width=16 height=16 onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value+1" />&nbsp;
+        <img src="static/icons/minus.png" style="cursor: pointer" width=16 height=16
+            onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value-1" />
+        <img src="static/icons/plus.png" style="cursor: pointer" width=16 height=16
+            onclick="document.getElementById('trigger_temp').value = +document.getElementById('trigger_temp').value+1" />&nbsp;
         <br />
-        {% set options = ['auto', 'on'] %}
-        <label for="status_fan">Fan:</label>
-        <select id="status_fan" name="status_fan">
-        {% for option in options %}
-            {% if status_fan == option %}
-                <option selected="selected">{{ option }}</option>
-            {% else %}
-                <option>{{ option }}</option>
-            {% endif %}
-        {% endfor %}
-        </select><br />
-        {% set options = ['auto', 'on', 'off'] %}
-        <label for="status_ac">AC:</label>
-        <select id="status_ac" name="status_ac">
-        {% for option in options %}
-            {% if status_ac == option %}
-                <option selected="selected">{{ option }}</option>
-            {% else %}
-                <option>{{ option }}</option>
-            {% endif %}
-        {% endfor %}
-        </select><br />
-        <label for="status_heat">Heat:</label>
-        <select id="status_heat" name="status_heat">
-        {% for option in options %}
-            {% if status_heat == option %}
-                <option selected="selected">{{ option }}</option>
-            {% else %}
-                <option>{{ option }}</option>
-            {% endif %}
-        {% endfor %}
-        </select><br />
+        <table>
+        <tr>
+            {% set options = ['auto', 'on'] %}
+            <td><label for="status_fan">Fan:</label></td>
+            <td><select id="status_fan" name="status_fan">
+            {% for option in options %}
+                {% if status_fan == option %}
+                    <option selected="selected">{{ option }}</option>
+                {% else %}
+                    <option>{{ option }}</option>
+                {% endif %}
+            {% endfor %}
+            </select></td>
+        </tr><tr>
+            {% set options = ['auto', 'on', 'off'] %}
+            <td><label for="status_ac">AC:</label></td>
+            <td><select id="status_ac" name="status_ac">
+            {% for option in options %}
+                {% if status_ac == option %}
+                    <option selected="selected">{{ option }}</option>
+                {% else %}
+                    <option>{{ option }}</option>
+                {% endif %}
+            {% endfor %}
+            </select></td>
+        </tr><tr>
+            <td><label for="status_heat">Heat:</label></td>
+            <td><select id="status_heat" name="status_heat">
+            {% for option in options %}
+                {% if status_heat == option %}
+                    <option selected="selected">{{ option }}</option>
+                {% else %}
+                    <option>{{ option }}</option>
+                {% endif %}
+            {% endfor %}
+            </select></td></tr>
+        </table>
         <input type="submit" value="save" />
     </form>
 </div>
