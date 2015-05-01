@@ -129,6 +129,15 @@ def apigensecret():
 def validateuser():
     if 'current_user' not in flask.session or not flask.session['current_user']:
         return False
+
+    try:
+        prev_ip = flask.session['last_seen_ip']
+    except KeyError:
+        prev_ip = None
+
+    if prev_ip != flask.request.remote_addr:
+        return False
+
     return True
 
 
@@ -196,7 +205,7 @@ def onstart():
 
     t = threading.Thread(target=periodicrun, daemon=True)
     t.start()
-    
+
 
 @app.route('/setstate', methods=['GET'])
 def setstate():
@@ -215,7 +224,7 @@ def setstate():
         user = flask.session['current_user']
         
     storeobject('api_user_salts', api_user_salts)
-    
+
     props = loadobject('props')
 
     if ('status_ac' in flask.request.args and
@@ -243,7 +252,7 @@ def newevent():
     validation = validateuser()
     if not validation:
         return flask.redirect('/')
-        
+
     #with open('pickledb/days_short.pickle', 'rb') as days_short_file:
     #    days_short = pickle.load(days_short_file)
     days_short = loadobject('days_short')
@@ -266,7 +275,7 @@ def newevent():
     t = f['time']
     while len(t) < 4:
         t = '0' + t
-    
+
     props = loadobject('props')
 
     props['events'].append([days, t, f['device_select'], f['mode_select'], temp])
@@ -274,7 +283,7 @@ def newevent():
     props['events'].sort(key=lambda x: x[1])
 
     logging.warning('%s created event %s' % (flask.session['current_user'], str(props['events'][-1])))
-    
+
     storeobject('props', props)
 
     return flask.redirect('/')
@@ -287,15 +296,15 @@ def deleteevent():
         return flask.redirect('/')
 
     eventIndex = int(flask.request.args['index'])
-    
+
     props = loadobject('props')
 
     logging.warning('%s deleted event %s' % (flask.session['current_user'], str(props['events'][eventIndex])))
 
     props['events'].pop(eventIndex)
-    
+
     storeobject('props', props)
-    
+
     return flask.redirect('/')
 
 
@@ -307,7 +316,9 @@ def login():
     Normal login: GET request generates new 64-byte random secret which is embedded in the page js.
         When a password is entered, we get the md5 hash then append the secret to this hash
         and then hash it again.
-        Result: an attackter cannot use intercepted data to log in :)"""
+        Result: an attackter cannot use intercepted data to log in.
+    If the ip address of a user's request changes. Validation will return false
+        to prevent copying cookies from a local maching and moving them elsewhere"""
 
     if 'session_salt' not in flask.session or flask.request.method == 'GET':
         flask.session['session_salt'] = gensecret()
@@ -325,6 +336,9 @@ def login():
 
     flask.session['session_salt'] = gensecret()  #Create a new secret after succesfful login
     flask.session['current_user'] = user
+    # Record ip of login. If this changes, preexisting login sessions will be invalidated.
+    #flask.session['last_seen_ip'] = flask.request.remote_addr
+    flask.session['last_seen_ip'] = flask.request.environ['REMOTE_ADDR']
     # logging.warning('%s logged in' % user)
 
     return flask.redirect('/')
@@ -398,9 +412,9 @@ def rootdir():
     validation = validateuser()
     if not validation:
         return flask.redirect('/login')
-    
+
     props = loadobject('props')
-    
+
     page = flask.render_template('root.html', **dict(props, **flask.session))
     return page
 
