@@ -66,6 +66,7 @@ def periodicrun():
 
         if i % 5 == 0:
             props['temp_inside'] = '%.1f' % IO.gettemp()
+            storeobject('props', props)
 
         if i % 10 == 0:
             storeobject('props', props);
